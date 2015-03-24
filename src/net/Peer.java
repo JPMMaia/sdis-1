@@ -1,12 +1,13 @@
 package net;
 
 /**
- * Created by João on 20/03/2015.
+ * Created by Joï¿½o on 20/03/2015.
  */
 public class Peer
 {
     public Peer(String mcAddress, String mcPort, String mdbAddress, String mdbPort, String mdrAddress, String mdrPort)
     {
+
     }
 
     public static void main(String[] args)
