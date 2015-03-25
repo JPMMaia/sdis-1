@@ -21,5 +21,6 @@ public class Chunk
         m_data = data;
 
         System.out.println("Chunk(" + data.length + "): " + new String(data, "UTF-8"));
+        System.out.println(m_fileId);
     }
 }
