@@ -1,16 +1,19 @@
 package net;
 
-/**
- * Created by João on 20/03/2015.
- */
-public abstract class MulticastChannel implements Runnable
-{
-    protected String m_address;
-    protected String m_port;
+import java.io.IOException;
+import java.net.*;
 
-    public MulticastChannel(String address, String port)
+/**
+ * Created by Joï¿½o on 20/03/2015.
+ */
+public abstract class MulticastChannel
+{
+    protected MulticastSocket m_socket;
+
+    public MulticastChannel(String address, int port) throws IOException
     {
-        m_address = address;
-        m_port = port;
+        m_socket = new MulticastSocket(port);
+        m_socket.setTimeToLive(1);
+        m_socket.joinGroup(InetAddress.getByName(address));
     }
 }
