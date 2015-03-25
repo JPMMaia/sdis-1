@@ -18,6 +18,8 @@ public class StoredFile
     private static final int s_MAX_SIZE = 64000;
     private String m_path;
     private Chunk[] m_chunks;
+    private Version m_version;
+    private FileId m_fileId;
 
     public StoredFile(String filePath)
     {
@@ -41,10 +43,11 @@ public class StoredFile
             fileStream.read(fileData);
             fileStream.close();
             fileStream = new FileInputStream(file);
-            String fileId = createFileIdentifier(file, fileData);
+            m_fileId = new FileId(file, fileData);
+            m_version = new Version('1', '2');
 
             // Fill all the chunks:
-            fillChunks(fileStream, fileId, numberOfChunks, lastChunkSize);
+            fillChunks(fileStream, numberOfChunks, lastChunkSize);
         }
         catch(Exception e)
         {
@@ -59,17 +62,7 @@ public class StoredFile
         }
     }
 
-    private static String createFileIdentifier(File file, byte[] fileData) throws NoSuchAlgorithmException, UnsupportedEncodingException
-    {
-        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, "UTF-8");
-
-        // Encrypt:
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(bitString.getBytes("UTF-8"));
-        return new String(md.digest(), "UTF-8");
-    }
-
-    private void fillChunks(FileInputStream fileStream, String fileId, int numberOfChunks, int lastChunkSize) throws IOException
+    private void fillChunks(FileInputStream fileStream, int numberOfChunks, int lastChunkSize) throws IOException
     {
         byte[] chunkData = new byte[s_MAX_SIZE];
         byte[] lastChunkData = new byte[lastChunkSize];
@@ -79,12 +72,12 @@ public class StoredFile
             if (i == numberOfChunks - 1) // last chunk:
             {
                 fileStream.read(lastChunkData);
-                m_chunks[i] = new Chunk(fileId, i, lastChunkData);
+                m_chunks[i] = new Chunk(m_version, m_fileId, new ChunkNo(i), lastChunkData);
             }
             else // others:
             {
                 fileStream.read(chunkData);
-                m_chunks[i] = new Chunk(fileId, i, chunkData);
+                m_chunks[i] = new Chunk(m_version, m_fileId, new ChunkNo(i), chunkData);
             }
         }
     }

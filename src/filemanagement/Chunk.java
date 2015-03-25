@@ -7,15 +7,14 @@ import java.io.UnsupportedEncodingException;
  */
 public class Chunk
 {
-    private String m_fileId;
-    private int m_chunkNo;
+    private Version m_version;
+    private FileId m_fileId;
+    private ChunkNo m_chunkNo;
     private byte[] m_data;
 
-    public Chunk(String fileId, int chunkNo, byte[] data) throws UnsupportedEncodingException
+    public Chunk(Version version, FileId fileId, ChunkNo chunkNo, byte[] data) throws UnsupportedEncodingException
     {
-        if (chunkNo < 0 || chunkNo > 1000000)
-            throw new IllegalArgumentException("Ilegal argument in chunkNo: " + chunkNo);
-
+        m_version = version;
         m_fileId = fileId;
         m_chunkNo = chunkNo;
         m_data = data;
