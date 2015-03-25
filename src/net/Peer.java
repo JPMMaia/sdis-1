@@ -20,6 +20,10 @@ public class Peer
         m_mcChannel = new MCMuliticastChannel(mcAddress, mcPort);
         m_mdbChannel = new MDBMulticastChannel(mdbAddress, mdbPort);
         m_mdrChannel = new MDRMulticastChannel(mdrAddress, mdrPort);
+
+		// Read config file, or receive requests to backup a certain file
+
+// For each chunk, send putchunk messages
     }
 
 
