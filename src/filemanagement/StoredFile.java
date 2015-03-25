@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class StoredFile
 {
+    private static final int s_MAX_SIZE = 64000;
     private String m_path;
     private Chunk[] m_chunks;
 
@@ -31,8 +32,8 @@ public class StoredFile
             long fileSize = file.length();
 
             // Get number of chunks + last chunk size:
-            int numberOfChunks = (int) (fileSize / 64000.0) + 1; // floor + 1 (last chunk)
-            int lastChunkSize = (int) fileSize % 64000;
+            int numberOfChunks = (int) (fileSize / (float)s_MAX_SIZE) + 1; // floor + 1 (last chunk)
+            int lastChunkSize = (int) fileSize % s_MAX_SIZE;
             m_chunks = new Chunk[numberOfChunks];
 
             // Read file for identifier:
@@ -44,7 +45,6 @@ public class StoredFile
 
             // Fill all the chunks:
             fillChunks(fileStream, fileId, numberOfChunks, lastChunkSize);
-
         }
         catch(Exception e)
         {
@@ -59,9 +59,19 @@ public class StoredFile
         }
     }
 
+    private static String createFileIdentifier(File file, byte[] fileData) throws NoSuchAlgorithmException, UnsupportedEncodingException
+    {
+        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, "UTF-8");
+
+        // Encrypt:
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(bitString.getBytes("UTF-8"));
+        return new String(md.digest(), "UTF-8");
+    }
+
     private void fillChunks(FileInputStream fileStream, String fileId, int numberOfChunks, int lastChunkSize) throws IOException
     {
-        byte[] chunkData = new byte[64000];
+        byte[] chunkData = new byte[s_MAX_SIZE];
         byte[] lastChunkData = new byte[lastChunkSize];
 
         for(int i = 0; i < numberOfChunks; i++)
@@ -77,16 +87,6 @@ public class StoredFile
                 m_chunks[i] = new Chunk(fileId, i, chunkData);
             }
         }
-    }
-
-    private static String createFileIdentifier(File file, byte[] fileData) throws NoSuchAlgorithmException, UnsupportedEncodingException
-    {
-        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, "UTF-8");
-
-        // Encrypt:
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(bitString.getBytes("UTF-8"));
-        return new String(md.digest(), "UTF-8");
     }
 
     private static void closeFileStream(FileInputStream fileStream)
