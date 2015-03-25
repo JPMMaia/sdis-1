@@ -3,9 +3,12 @@ package filemanagement;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by Miguel on 23-03-2015.
@@ -17,13 +20,31 @@ public class StoredFile
 
     public StoredFile(String filePath)
     {
-        File file = null;
         FileInputStream fileStream = null;
 
         try
         {
-            file = new File(filePath);
+            File file = new File(filePath);
             fileStream = new FileInputStream(file);
+
+            // Get file length in bytes:
+            long fileSize = file.length();
+
+            // Get number of chunks + last chunk size:
+            int numberOfChunks = (int) (fileSize / 64000.0) + 1; // floor + 1 (last chunk)
+            int lastChunkSize = (int) fileSize % 64000;
+            m_chunks = new Chunk[numberOfChunks];
+
+            // Read file for identifier:
+            byte[] fileData = new byte[(int) fileSize];
+            fileStream.read(fileData);
+            fileStream.close();
+            fileStream = new FileInputStream(file);
+            String fileId = createFileIdentifier(file, fileData);
+
+            // Fill all the chunks:
+            fillChunks(fileStream, fileId, numberOfChunks, lastChunkSize);
+
         }
         catch(Exception e)
         {
@@ -36,34 +57,36 @@ public class StoredFile
             if (fileStream != null)
                 closeFileStream(fileStream);
         }
-
-        // Get file length in bytes:
-        long fileSize = file.length();
-
-
-        // Get number of chunks + last chunk size:
-        int numberOfChunks = (int) (fileSize / 64000.0) + 1; // floor + 1 (last chunk)
-        int lastChunkSize = (int) fileSize % 64000;
-        m_chunks = new Chunk[numberOfChunks];
-
-        // Fill all the chunks:
-        //fillChunks(fileSize, numberOfChunks, lastChunkSize);
     }
 
-    private void fillChunks(byte[] fileData, int numberOfChunks, int lastChunkSize)
+    private void fillChunks(FileInputStream fileStream, String fileId, int numberOfChunks, int lastChunkSize) throws IOException
     {
-/*        for(int i = 0; i < numberOfChunks; i++)
+        byte[] chunkData = new byte[64000];
+        byte[] lastChunkData = new byte[lastChunkSize];
+
+        for(int i = 0; i < numberOfChunks; i++)
         {
             if (i == numberOfChunks - 1) // last chunk:
             {
-
-                m_chunks[i] = new Chunk("NAO XEI", i);
+                fileStream.read(lastChunkData);
+                m_chunks[i] = new Chunk(fileId, i, lastChunkData);
             }
             else // others:
             {
-                m_chunks[i] = new Chunk("NAO XEI", i, lastChunkSize);
+                fileStream.read(chunkData);
+                m_chunks[i] = new Chunk(fileId, i, chunkData);
             }
-        }*/
+        }
+    }
+
+    private static String createFileIdentifier(File file, byte[] fileData) throws NoSuchAlgorithmException, UnsupportedEncodingException
+    {
+        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, "UTF-8");
+
+        // Encrypt:
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(bitString.getBytes("UTF-8"));
+        return new String(md.digest(), "UTF-8");
     }
 
     private static void closeFileStream(FileInputStream fileStream)
@@ -78,5 +101,10 @@ public class StoredFile
             e.printStackTrace();
             System.exit(-2);
         }
+    }
+
+    public static void main(String[] args)
+    {
+        new StoredFile("C:\\Users\\Miguel\\IdeaProjects\\gosto.txt");
     }
 }

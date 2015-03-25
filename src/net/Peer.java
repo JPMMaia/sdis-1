@@ -1,13 +1,21 @@
 package net;
 
+import filemanagement.Chunk;
+
+import java.util.ArrayList;
+
 /**
  * Created by Jo�o on 20/03/2015.
  */
 public class Peer
 {
+    private ArrayList<Chunk> m_chunks = new ArrayList<Chunk>();
+
     public Peer(String mcAddress, String mcPort, String mdbAddress, String mdbPort, String mdrAddress, String mdrPort)
     {
+        // Read config file, or receive requests to backup a certain file
 
+        // For each chunk, send putchunk messages
     }
 
     public static void main(String[] args)
