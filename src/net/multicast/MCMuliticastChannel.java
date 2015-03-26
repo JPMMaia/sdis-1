@@ -1,11 +1,10 @@
 package net.multicast;
 
-import net.messages.GetChunkMessage;
-import net.messages.RemovedMessage;
-import net.messages.StoredMessage;
+import net.messages.*;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Jo�o on 20/03/2015.
@@ -25,8 +24,17 @@ public class MCMuliticastChannel extends MulticastChannel
     {
         while(true)
         {
-            DatagramPacket packet = new DatagramPacket();
-            m_socket.receive(packet);
+            try
+            {
+                DatagramPacket packet = new DatagramPacket(m_buffer, s_MAX_PACKET_SIZE);
+                m_socket.receive(packet);
+
+                processHeader(packet.getData());
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -48,5 +56,42 @@ public class MCMuliticastChannel extends MulticastChannel
     public void sendRemovedMessage(RemovedMessage message) throws IOException
     {
         sendMessage(message);
+    }
+
+    private void processHeader(byte[] header)
+    {
+        String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
+
+        // TODO Add more for enhancement messages:
+        if(messages.length > 1)
+        {
+            processMessage(messages[0]);
+        }
+        else if(messages.length == 1)
+        {
+            processMessage(messages[0]);
+        }
+    }
+
+    private void processMessage(String message)
+    {
+        String[] fields = Message.splitMessage(message);
+        String messageType = fields[0];
+        if(messageType.equals(StoredMessage.s_TYPE))
+        {
+            // TODO
+        }
+        else if(messageType.equals(GetChunkMessage.s_TYPE))
+        {
+            // TODO
+        }
+        else if(messageType.equals(DeleteMessage.s_TYPE))
+        {
+            // TODO
+        }
+        else if(messageType.equals(RemovedMessage.s_TYPE))
+        {
+            // TODO
+        }
     }
 }

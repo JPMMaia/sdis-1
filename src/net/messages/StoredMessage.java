@@ -4,13 +4,14 @@ import filemanagement.ChunkNo;
 import filemanagement.Version;
 import filemanagement.FileId;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Miguel on 23-03-2015.
  */
 public class StoredMessage extends Message
 {
+    public static final String s_TYPE = "STORED";
     private ChunkNo m_chunkNo;
 
     public StoredMessage(Version version, FileId fileId, ChunkNo chunkNo)
@@ -25,6 +26,20 @@ public class StoredMessage extends Message
     {
         String message = "STORED " + m_version + " " + m_fileId + " " + m_chunkNo + 0xD + 0xA;
 
-        return message.getBytes(Charset.forName("ASCII"));
+        return message.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    public ChunkNo getChunkNo()
+    {
+        return m_chunkNo;
+    }
+
+    public static StoredMessage createMessage(String[] messageSplit)
+    {
+        Version version = new Version(messageSplit[1]);
+        FileId fileId = new FileId(messageSplit[2]);
+        ChunkNo chunkNo = new ChunkNo(messageSplit[3]);
+
+        return new StoredMessage(version, fileId, chunkNo);
     }
 }

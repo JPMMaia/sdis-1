@@ -6,10 +6,17 @@ public class ReplicationDeg
 {
     private int m_value;
 
+    public ReplicationDeg(String value) throws InvalidParameterException
+    {
+        int v = Integer.parseInt(value);
+        ReplicationDeg.throwIfInvalid(v);
+
+        m_value = v;
+    }
+
     public ReplicationDeg(int value)
     {
-        if(value < 0 || value > 9)
-            throw new InvalidParameterException("ReplicationDeg::constructor: value must be between 0 and 9!");
+        ReplicationDeg.throwIfInvalid(value);
 
         m_value = value;
     }
@@ -28,5 +35,11 @@ public class ReplicationDeg
     public void setValue(int value)
     {
         m_value = value;
+    }
+
+    private static void throwIfInvalid(int value) throws InvalidParameterException
+    {
+        if(value < 0 || value > 9)
+            throw new InvalidParameterException("ReplicationDeg::constructor: value must be between 0 and 9!");
     }
 }

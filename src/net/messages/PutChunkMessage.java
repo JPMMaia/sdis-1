@@ -5,24 +5,23 @@ import filemanagement.Version;
 import filemanagement.FileId;
 import filemanagement.ChunkNo;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Miguel on 23-03-2015.
  */
 public class PutChunkMessage extends Message
 {
+    public static final String s_TYPE = "PUTCHUNK";
     private ChunkNo m_chunkNo;
     private ReplicationDeg m_replicationDeg;
-    private String m_body;
 
-    public PutChunkMessage(Version version, FileId fileId, ChunkNo chunkNo, ReplicationDeg replicationDeg, String body)
+    public PutChunkMessage(Version version, FileId fileId, ChunkNo chunkNo, ReplicationDeg replicationDeg)
     {
         super(version, fileId);
 
         m_chunkNo = chunkNo;
         m_replicationDeg = replicationDeg;
-        m_body = body;
     }
 
     @Override
@@ -30,6 +29,26 @@ public class PutChunkMessage extends Message
     {
         String message = "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg + 0xD + 0xA;
 
-        return message.getBytes(Charset.forName("ASCII"));
+        return message.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    public ChunkNo getChunkNo()
+    {
+        return m_chunkNo;
+    }
+
+    public ReplicationDeg getReplicationDeg()
+    {
+        return m_replicationDeg;
+    }
+
+    public static PutChunkMessage createMessage(String[] messageSplit)
+    {
+        Version version = new Version(messageSplit[1]);
+        FileId fileId = new FileId(messageSplit[2]);
+        ChunkNo chunkNo = new ChunkNo(messageSplit[3]);
+        ReplicationDeg replicationDeg = new ReplicationDeg(messageSplit[4]);
+
+        return new PutChunkMessage(version, fileId, chunkNo, replicationDeg);
     }
 }

@@ -5,6 +5,4 @@ package net.multicast;
  */
 public class MulticastTester
 {
-    @Test
-    public void testMulti
 }

@@ -1,5 +1,7 @@
 package filemanagement;
 
+import java.security.InvalidParameterException;
+
 /**
  * Created by João on 25/03/2015.
  */
@@ -7,10 +9,17 @@ public class ChunkNo
 {
     private int m_value;
 
+    public ChunkNo(String value) throws InvalidParameterException
+    {
+        int v = Integer.parseInt(value);
+        ChunkNo.throwIfInvalid(v);
+
+        m_value = v;
+    }
+
     public ChunkNo(int value)
     {
-        if (value < 0 || value > 1000000)
-            throw new IllegalArgumentException("ChunkNo::constructor: Ilegal argument in chunkNo: " + value);
+        ChunkNo.throwIfInvalid(value);
 
         m_value = value;
     }
@@ -29,5 +38,11 @@ public class ChunkNo
     public void setValue(int value)
     {
         m_value = value;
+    }
+
+    private static void throwIfInvalid(int value) throws InvalidParameterException
+    {
+        if (value < 0 || value > 1000000)
+            throw new IllegalArgumentException("ChunkNo::constructor: Ilegal argument in chunkNo: " + value);
     }
 }

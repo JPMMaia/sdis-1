@@ -23,7 +23,7 @@ public class Peer
 
 		// Read config file, or receive requests to backup a certain file
 
-// For each chunk, send putchunk messages
+        // For each chunk, send putchunk messages
     }
 
 

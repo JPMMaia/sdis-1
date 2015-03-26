@@ -18,4 +18,24 @@ public abstract class Message
     }
 
     public abstract byte[] toBytes();
+
+    public Version getVersion()
+    {
+        return m_version;
+    }
+
+    public FileId getFileId()
+    {
+        return m_fileId;
+    }
+
+    public static String[] splitMessage(String message)
+    {
+        return message.split("\\s+");
+    }
+
+    public static String[] splitHeader(String header)
+    {
+        return header.split("(\\r\\n)+");
+    }
 }

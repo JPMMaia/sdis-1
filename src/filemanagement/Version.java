@@ -1,5 +1,7 @@
 package filemanagement;
 
+import java.security.InvalidParameterException;
+
 /**
  * Created by João on 25/03/2015.
  */
@@ -7,6 +9,18 @@ public class Version
 {
     private char m_version;
     private char m_subVersion;
+
+    public Version(String value) throws InvalidParameterException
+    {
+        if(value.length() != 3)
+            throw new InvalidParameterException();
+
+        m_version = value.charAt(0);
+        if(value.charAt(1) != '.')
+            throw new InvalidParameterException();
+
+        m_subVersion = value.charAt(2);
+    }
 
     public Version(char version, char subVersion)
     {

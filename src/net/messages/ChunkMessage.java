@@ -4,13 +4,15 @@ import filemanagement.ChunkNo;
 import filemanagement.Version;
 import filemanagement.FileId;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 
 /**
  * Created by Miguel on 23-03-2015.
  */
 public class ChunkMessage extends Message
 {
+    public static final String s_TYPE = "CHUNK";
     private ChunkNo m_chunkNo;
 
     public ChunkMessage(Version version, FileId fileId, ChunkNo chunkNo)
@@ -25,6 +27,20 @@ public class ChunkMessage extends Message
     {
         String message = "CHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + 0xD + 0xA;
 
-        return message.getBytes(Charset.forName("ASCII"));
+        return message.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    public ChunkNo getChunkNo()
+    {
+        return m_chunkNo;
+    }
+
+    public static ChunkMessage createMessage(String[] messageSplit)
+    {
+        Version version = new Version(messageSplit[1]);
+        FileId fileId = new FileId(messageSplit[2]);
+        ChunkNo chunkNo = new ChunkNo(messageSplit[3]);
+
+        return new ChunkMessage(version, fileId, chunkNo);
     }
 }
