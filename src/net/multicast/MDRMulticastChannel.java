@@ -1,6 +1,5 @@
 package net.multicast;
 
-import net.MulticastChannel;
 import net.messages.ChunkMessage;
 
 import java.io.IOException;
@@ -15,8 +14,14 @@ public class MDRMulticastChannel extends MulticastChannel
         super(address, port);
     }
 
-    public void sendChunkMessage(ChunkMessage message)
+    @Override
+    public void run()
     {
 
+    }
+
+    public void sendChunkMessage(ChunkMessage message) throws IOException
+    {
+        sendMessage(message);
     }
 }

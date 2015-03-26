@@ -16,4 +16,6 @@ public abstract class Message
         m_version = version;
         m_fileId = fileId;
     }
+
+    public abstract byte[] toBytes();
 }

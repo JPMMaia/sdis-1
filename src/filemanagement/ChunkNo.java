@@ -15,9 +15,10 @@ public class ChunkNo
         m_value = value;
     }
 
-    public byte[] toBytes()
+    @Override
+    public String toString()
     {
-        return String.valueOf(m_value).getBytes();
+        return String.valueOf(m_value);
     }
 
     public int getValue()

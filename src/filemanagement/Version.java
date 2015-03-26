@@ -14,9 +14,10 @@ public class Version
         m_subVersion = subVersion;
     }
 
-    public byte[] toBytes()
+    @Override
+    public String toString()
     {
-        return new String(new char[]{m_version, '.', m_subVersion}).getBytes();
+        return new String(new char[]{m_version, '.', m_subVersion});
     }
 
     public char getVersion()

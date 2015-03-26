@@ -14,12 +14,10 @@ public class ReplicationDeg
         m_value = value;
     }
 
-    public byte[] toBytes()
+    @Override
+    public String toString()
     {
-        return new byte[]
-                {
-                        (byte) String.valueOf(m_value).charAt(0)
-                };
+        return String.valueOf(m_value);
     }
 
     public int getValue()

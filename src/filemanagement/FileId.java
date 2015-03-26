@@ -27,9 +27,10 @@ public class FileId
         m_value = new String(md.digest(), "UTF-8");
     }
 
-    public byte[] toBytes()
+    @Override
+    public String toString()
     {
-        return m_value.getBytes();
+        return m_value;
     }
 
     public String getValue()
