@@ -52,7 +52,7 @@ public class StoredFile
         }
         catch(Exception e)
         {
-            System.out.println("Error while reading from file: " + e.toString());
+            System.err.println("StoredFile::constructor: Error while reading from file: " + e.toString());
             e.printStackTrace();
             System.exit(-1);
         }
@@ -91,7 +91,7 @@ public class StoredFile
         }
         catch (IOException e)
         {
-            System.out.println("Error closing file: " + e.toString());
+            System.err.println("StoredFile::closeFileStream: Error closing file: " + e.toString());
             e.printStackTrace();
             System.exit(-2);
         }

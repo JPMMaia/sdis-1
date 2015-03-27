@@ -12,31 +12,9 @@ import java.security.InvalidParameterException;
  */
 public class MCMulticastChannel extends MulticastChannel
 {
-    private static final int s_MAX_PACKET_SIZE = 65000;
-    private byte[] m_buffer = new byte[s_MAX_PACKET_SIZE];
-
     public MCMulticastChannel(String address, int port) throws IOException
     {
         super(address, port);
-    }
-
-    @Override
-    public void run()
-    {
-        while(true)
-        {
-            try
-            {
-                DatagramPacket packet = new DatagramPacket(m_buffer, s_MAX_PACKET_SIZE);
-                m_socket.receive(packet);
-
-                processHeader(packet.getData());
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void sendStoredMessage(StoredMessage message) throws IOException
@@ -59,7 +37,8 @@ public class MCMulticastChannel extends MulticastChannel
         sendMessage(message);
     }
 
-    private void processHeader(byte[] header)
+    @Override
+    protected void processHeader(byte[] header)
     {
         String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
 

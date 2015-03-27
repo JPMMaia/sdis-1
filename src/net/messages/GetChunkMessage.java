@@ -25,7 +25,7 @@ public class GetChunkMessage extends Message
     @Override
     public byte[] toBytes()
     {
-        String message = "GETCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + 0xD + 0xA;
+        String message = "GETCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + Message.s_CRLF;
 
         return message.getBytes(StandardCharsets.US_ASCII);
     }

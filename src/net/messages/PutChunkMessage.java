@@ -28,7 +28,7 @@ public class PutChunkMessage extends Message
     @Override
     public byte[] toBytes()
     {
-        String message = "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg + 0xD + 0xA;
+        String message = "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg + Message.s_CRLF;
 
         return message.getBytes(StandardCharsets.US_ASCII);
     }

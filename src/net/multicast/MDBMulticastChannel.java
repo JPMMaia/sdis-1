@@ -4,6 +4,7 @@ import net.messages.Message;
 import net.messages.PutChunkMessage;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 
@@ -17,17 +18,13 @@ public class MDBMulticastChannel extends MulticastChannel
         super(address, port);
     }
 
-    @Override
-    public void run()
-    {
-    }
-
     public void sendPutChunkMessage(PutChunkMessage message, byte[] body) throws IOException
     {
         sendMessage(message);
     }
 
-    private void processHeader(byte[] header)
+    @Override
+    protected void processHeader(byte[] header)
     {
         String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
 

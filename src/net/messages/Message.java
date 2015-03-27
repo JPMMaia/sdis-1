@@ -8,6 +8,7 @@ import net.chunks.Version;
  */
 public abstract class Message
 {
+    public static final String s_CRLF = "\r\n";
     protected Version m_version;
     protected FileId m_fileId;
 
@@ -31,7 +32,7 @@ public abstract class Message
 
     public static String[] splitMessage(String message)
     {
-        return message.split("\\s+");
+        return message.trim().split("\\s+");
     }
 
     public static String[] splitHeader(String header)

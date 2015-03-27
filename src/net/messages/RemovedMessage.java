@@ -25,7 +25,7 @@ public class RemovedMessage extends Message
     @Override
     public byte[] toBytes()
     {
-        String message = "REMOVED " + m_version + " " + m_fileId + " " + m_chunkNo + 0xD + 0xA;
+        String message = "REMOVED " + m_version + " " + m_fileId + " " + m_chunkNo + Message.s_CRLF;
 
         return message.getBytes(StandardCharsets.US_ASCII);
     }

@@ -20,7 +20,7 @@ public class DeleteMessage extends Message
     @Override
     public byte[] toBytes()
     {
-        String message = "DELETE " + m_version + " " + m_fileId + 0xD + 0xA;
+        String message = "DELETE " + m_version + " " + m_fileId + Message.s_CRLF;
 
         return message.getBytes(StandardCharsets.US_ASCII);
     }

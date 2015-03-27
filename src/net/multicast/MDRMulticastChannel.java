@@ -17,18 +17,13 @@ public class MDRMulticastChannel extends MulticastChannel
         super(address, port);
     }
 
-    @Override
-    public void run()
-    {
-
-    }
-
     public void sendChunkMessage(ChunkMessage message, byte[] body) throws IOException
     {
         sendMessage(message);
     }
 
-    private void processHeader(byte[] header)
+    @Override
+    protected void processHeader(byte[] header)
     {
         String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
 
