@@ -1,4 +1,4 @@
-package filemanagement;
+package net.chunks;
 
 import java.io.UnsupportedEncodingException;
 
@@ -21,5 +21,25 @@ public class Chunk
 
         System.out.println("Chunk(" + data.length + "): " + new String(data, "UTF-8"));
         System.out.println(m_fileId);
+    }
+
+    public Version getVersion()
+    {
+        return m_version;
+    }
+
+    public FileId getFileId()
+    {
+        return m_fileId;
+    }
+
+    public ChunkNo getChunkNo()
+    {
+        return m_chunkNo;
+    }
+
+    public byte[] getData()
+    {
+        return m_data;
     }
 }

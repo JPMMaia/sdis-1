@@ -1,7 +1,7 @@
 package net.messages;
 
-import filemanagement.FileId;
-import filemanagement.Version;
+import net.chunks.FileId;
+import net.chunks.Version;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;

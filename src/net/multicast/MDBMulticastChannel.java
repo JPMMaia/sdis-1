@@ -22,7 +22,7 @@ public class MDBMulticastChannel extends MulticastChannel
     {
     }
 
-    public void sendPutChunkMessage(PutChunkMessage message, String body) throws IOException
+    public void sendPutChunkMessage(PutChunkMessage message, byte[] body) throws IOException
     {
         sendMessage(message);
     }

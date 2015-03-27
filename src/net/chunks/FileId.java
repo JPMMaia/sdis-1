@@ -1,4 +1,4 @@
-package filemanagement;
+package net.chunks;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;

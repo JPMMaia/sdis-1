@@ -1,22 +1,25 @@
-package filemanagement;
+package net.chunks;
 
 import java.security.InvalidParameterException;
 
-public class ReplicationDeg
+/**
+ * Created by João on 25/03/2015.
+ */
+public class ChunkNo
 {
     private int m_value;
 
-    public ReplicationDeg(String value) throws InvalidParameterException
+    public ChunkNo(String value) throws InvalidParameterException
     {
         int v = Integer.parseInt(value);
-        ReplicationDeg.throwIfInvalid(v);
+        ChunkNo.throwIfInvalid(v);
 
         m_value = v;
     }
 
-    public ReplicationDeg(int value) throws InvalidParameterException
+    public ChunkNo(int value) throws InvalidParameterException
     {
-        ReplicationDeg.throwIfInvalid(value);
+        ChunkNo.throwIfInvalid(value);
 
         m_value = value;
     }
@@ -39,7 +42,7 @@ public class ReplicationDeg
 
     private static void throwIfInvalid(int value) throws InvalidParameterException
     {
-        if(value < 0 || value > 9)
-            throw new InvalidParameterException("ReplicationDeg::constructor: value must be between 0 and 9!");
+        if (value < 0 || value > 1000000)
+            throw new IllegalArgumentException("ChunkNo::constructor: Ilegal argument in chunkNo: " + value);
     }
 }

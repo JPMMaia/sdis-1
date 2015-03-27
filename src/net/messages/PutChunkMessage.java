@@ -1,9 +1,9 @@
 package net.messages;
 
-import filemanagement.ChunkNo;
-import filemanagement.FileId;
-import filemanagement.ReplicationDeg;
-import filemanagement.Version;
+import net.chunks.ChunkNo;
+import net.chunks.FileId;
+import net.chunks.ReplicationDeg;
+import net.chunks.Version;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;

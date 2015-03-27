@@ -1,7 +1,7 @@
 package net.messages;
 
-import filemanagement.FileId;
-import filemanagement.Version;
+import net.chunks.FileId;
+import net.chunks.Version;
 
 /**
  * Created by Miguel on 23-03-2015.

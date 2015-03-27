@@ -23,7 +23,7 @@ public class MDRMulticastChannel extends MulticastChannel
 
     }
 
-    public void sendChunkMessage(ChunkMessage message, String body) throws IOException
+    public void sendChunkMessage(ChunkMessage message, byte[] body) throws IOException
     {
         sendMessage(message);
     }

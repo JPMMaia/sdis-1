@@ -1,4 +1,9 @@
-package filemanagement;
+package net;
+
+import net.chunks.Chunk;
+import net.chunks.ChunkNo;
+import net.chunks.FileId;
+import net.chunks.Version;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,18 +15,20 @@ import java.io.IOException;
 public class StoredFile
 {
     private static final int s_MAX_SIZE = 64000;
-    private String m_path;
+    private String m_filename;
     private Chunk[] m_chunks;
     private Version m_version;
     private FileId m_fileId;
 
-    public StoredFile(String filePath)
+    public StoredFile(String filename)
     {
+        m_filename = filename;
+
         FileInputStream fileStream = null;
 
         try
         {
-            File file = new File(filePath);
+            File file = new File(filename);
             fileStream = new FileInputStream(file);
 
             // Get file length in bytes:
@@ -88,6 +95,26 @@ public class StoredFile
             e.printStackTrace();
             System.exit(-2);
         }
+    }
+
+    public String getFilename()
+    {
+        return m_filename;
+    }
+
+    public Chunk[] getChunks()
+    {
+        return m_chunks;
+    }
+
+    public Version getVersion()
+    {
+        return m_version;
+    }
+
+    public FileId getFileId()
+    {
+        return m_fileId;
     }
 
     public static void main(String[] args)
