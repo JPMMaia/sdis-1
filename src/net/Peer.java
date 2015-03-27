@@ -104,6 +104,7 @@ public class Peer implements PeerService
 
     public static void main(String[] args) throws IOException, AlreadyBoundException
     {
+        // 239.0.0.1 1 239.0.0.2 2 239.0.0.3 3
         if(args.length != 6)
         {
             System.err.println("Peer::main: Number of arguments must be 6!");
