@@ -10,12 +10,12 @@ import java.security.InvalidParameterException;
 /**
  * Created by Jo�o on 20/03/2015.
  */
-public class MCMuliticastChannel extends MulticastChannel
+public class MCMulticastChannel extends MulticastChannel
 {
     private static final int s_MAX_PACKET_SIZE = 65000;
     private byte[] m_buffer = new byte[s_MAX_PACKET_SIZE];
 
-    public MCMuliticastChannel(String address, int port) throws IOException
+    public MCMulticastChannel(String address, int port) throws IOException
     {
         super(address, port);
     }

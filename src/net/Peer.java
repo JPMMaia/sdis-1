@@ -4,7 +4,7 @@ import net.chunks.Chunk;
 import net.chunks.ChunkNo;
 import net.chunks.ReplicationDeg;
 import net.messages.PutChunkMessage;
-import net.multicast.MCMuliticastChannel;
+import net.multicast.MCMulticastChannel;
 import net.multicast.MDBMulticastChannel;
 import net.multicast.MDRMulticastChannel;
 
@@ -28,14 +28,14 @@ public class Peer implements PeerService
     public static final int s_PORT = 1099;
 
     private List<StoredFile> m_storedFiles;
-    private MCMuliticastChannel m_mcChannel;
+    private MCMulticastChannel m_mcChannel;
     private MDBMulticastChannel m_mdbChannel;
     private MDRMulticastChannel m_mdrChannel;
 
     public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
         m_storedFiles = new ArrayList<>();
-        m_mcChannel = new MCMuliticastChannel(mcAddress, mcPort);
+        m_mcChannel = new MCMulticastChannel(mcAddress, mcPort);
         m_mdbChannel = new MDBMulticastChannel(mdbAddress, mdbPort);
         m_mdrChannel = new MDRMulticastChannel(mdrAddress, mdrPort);
     }
