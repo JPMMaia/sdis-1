@@ -128,5 +128,7 @@ public class Peer implements PeerService
         // Bind in the registry:
         Registry registry = LocateRegistry.createRegistry(1099);
         registry.rebind(Peer.class.getName(), peerService);
+
+        System.out.println("Peer::main: Ready!");
     }
 }
