@@ -53,6 +53,7 @@ public class MDBMulticastChannel extends MulticastChannel
         if(messageType.equals(PutChunkMessage.s_TYPE))
         {
             PutChunkMessage putChunkMessage = PutChunkMessage.createMessage(fields);
+            System.out.println("MDBMulticastChannel::processMessage: fileId -> " + putChunkMessage.getFileId() + ";");
         }
     }
 }

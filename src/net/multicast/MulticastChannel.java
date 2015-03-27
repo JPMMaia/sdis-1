@@ -20,11 +20,13 @@ public abstract class MulticastChannel implements Runnable
 
     public MulticastChannel(String address, int port) throws IOException
     {
-        m_socket = new MulticastSocket(port);
-        m_socket.setTimeToLive(1);
-        m_socket.joinGroup(InetAddress.getByName(address));
         m_address = InetAddress.getByName(address);
         m_port = port;
+
+        m_socket = new MulticastSocket(port);
+        m_socket.setTimeToLive(1);
+        m_socket.joinGroup(m_address);
+        m_socket.setLoopbackMode(true);
     }
 
     @Override
