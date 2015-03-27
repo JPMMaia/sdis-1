@@ -2,6 +2,7 @@ package net.chunks;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -19,12 +20,12 @@ public class FileId
 
     public FileId(File file, byte[] fileData) throws UnsupportedEncodingException, NoSuchAlgorithmException
     {
-        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, "UTF-8");
+        String bitString = file.getAbsolutePath() + file.lastModified() + new String(fileData, StandardCharsets.US_ASCII);
 
         // Encrypt:
         MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(bitString.getBytes("UTF-8"));
-        m_value = new String(md.digest(), "UTF-8");
+        md.update(bitString.getBytes(StandardCharsets.US_ASCII));
+        m_value = FileId.hashToString(md.digest());
     }
 
     @Override
@@ -41,5 +42,33 @@ public class FileId
     public void setValue(String value)
     {
         m_value = value;
+    }
+
+    private static String hashToString(byte[] hash)
+    {
+        StringBuilder builder = new StringBuilder(hash.length * 2);
+
+        for (byte b : hash)
+        {
+            byte lsb = (byte)(b % (byte) 16);
+            if(lsb < 0)
+                lsb -= 0xF0;
+            byte msb = (byte)(b >> 4);
+            if(msb < 0)
+                msb -= 0xF0;
+
+            builder.append(byteToChar(msb));
+            builder.append(byteToChar(lsb));
+        }
+
+        return builder.toString();
+    }
+
+    private static char byteToChar(byte b)
+    {
+        if(b >= 0 && b <= 9)
+            return (char) ((char) b + '0');
+
+        return (char) ((char) b + 'A' - 0x0A);
     }
 }
