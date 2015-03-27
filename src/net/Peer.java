@@ -123,10 +123,10 @@ public class Peer implements PeerService
         peer.run();
 
         // Create peer service remote object:
-        PeerService peerService = (PeerService) UnicastRemoteObject.exportObject(peer, 1099);
+        PeerService peerService = (PeerService) UnicastRemoteObject.exportObject(peer, Peer.s_PORT);
 
         // Bind in the registry:
-        Registry registry = LocateRegistry.createRegistry(1099);
+        Registry registry = LocateRegistry.createRegistry(Peer.s_PORT);
         registry.rebind(Peer.class.getName(), peerService);
 
         System.out.println("Peer::main: Ready!");
