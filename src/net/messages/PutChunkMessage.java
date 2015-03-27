@@ -1,11 +1,12 @@
 package net.messages;
 
+import filemanagement.ChunkNo;
+import filemanagement.FileId;
 import filemanagement.ReplicationDeg;
 import filemanagement.Version;
-import filemanagement.FileId;
-import filemanagement.ChunkNo;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 
 /**
  * Created by Miguel on 23-03-2015.
@@ -42,8 +43,11 @@ public class PutChunkMessage extends Message
         return m_replicationDeg;
     }
 
-    public static PutChunkMessage createMessage(String[] messageSplit)
+    public static PutChunkMessage createMessage(String[] messageSplit) throws InvalidParameterException
     {
+        if(messageSplit.length != 5)
+            throw new InvalidParameterException();
+
         Version version = new Version(messageSplit[1]);
         FileId fileId = new FileId(messageSplit[2]);
         ChunkNo chunkNo = new ChunkNo(messageSplit[3]);

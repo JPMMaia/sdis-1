@@ -17,7 +17,7 @@ public class ChunkNo
         m_value = v;
     }
 
-    public ChunkNo(int value)
+    public ChunkNo(int value) throws InvalidParameterException
     {
         ChunkNo.throwIfInvalid(value);
 

@@ -1,7 +1,7 @@
 package net.messages;
 
-import filemanagement.Version;
 import filemanagement.FileId;
+import filemanagement.Version;
 
 /**
  * Created by Miguel on 23-03-2015.

@@ -14,7 +14,7 @@ public class ReplicationDeg
         m_value = v;
     }
 
-    public ReplicationDeg(int value)
+    public ReplicationDeg(int value) throws InvalidParameterException
     {
         ReplicationDeg.throwIfInvalid(value);
 

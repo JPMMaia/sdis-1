@@ -5,6 +5,7 @@ import net.messages.*;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 
 /**
  * Created by Jo�o on 20/03/2015.
@@ -62,36 +63,48 @@ public class MCMuliticastChannel extends MulticastChannel
     {
         String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
 
-        // TODO Add more for enhancement messages:
-        if(messages.length > 1)
+        try
         {
-            processMessage(messages[0]);
+            // TODO Add more for enhancement messages:
+            if(messages.length > 1)
+            {
+                processMessage(messages[0]);
+            }
+            else if(messages.length == 1)
+            {
+                processMessage(messages[0]);
+            }
         }
-        else if(messages.length == 1)
+        catch (InvalidParameterException e)
         {
-            processMessage(messages[0]);
+            // Ignore message
+            System.err.println("MCMulticastChannel::processHeader: Invalid header received. Ignoring header!");
         }
     }
 
-    private void processMessage(String message)
+    private void processMessage(String message) throws InvalidParameterException
     {
         String[] fields = Message.splitMessage(message);
         String messageType = fields[0];
         if(messageType.equals(StoredMessage.s_TYPE))
         {
             // TODO
+            StoredMessage storedMessage = StoredMessage.createMessage(fields);
         }
         else if(messageType.equals(GetChunkMessage.s_TYPE))
         {
             // TODO
+            GetChunkMessage getChunkMessage = GetChunkMessage.createMessage(fields);
         }
         else if(messageType.equals(DeleteMessage.s_TYPE))
         {
             // TODO
+            DeleteMessage deleteMessage = DeleteMessage.createMessage(fields);
         }
         else if(messageType.equals(RemovedMessage.s_TYPE))
         {
             // TODO
+            RemovedMessage removedMessage = RemovedMessage.createMessage(fields);
         }
     }
 }

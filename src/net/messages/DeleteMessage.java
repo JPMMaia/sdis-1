@@ -1,9 +1,10 @@
 package net.messages;
 
-import filemanagement.Version;
 import filemanagement.FileId;
+import filemanagement.Version;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 
 /**
  * Created by Miguel on 23-03-2015.
@@ -24,8 +25,11 @@ public class DeleteMessage extends Message
         return message.getBytes(StandardCharsets.US_ASCII);
     }
 
-    public static DeleteMessage createMessage(String[] messageSplit)
+    public static DeleteMessage createMessage(String[] messageSplit) throws InvalidParameterException
     {
+        if(messageSplit.length != 3)
+            throw new InvalidParameterException();
+
         Version version = new Version(messageSplit[1]);
         FileId fileId = new FileId(messageSplit[2]);
 

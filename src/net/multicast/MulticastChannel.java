@@ -3,7 +3,9 @@ package net.multicast;
 import net.messages.Message;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 
 /**
  * Created by Jo�o on 20/03/2015.

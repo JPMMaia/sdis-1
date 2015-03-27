@@ -1,9 +1,11 @@
 package net.multicast;
 
-import net.messages.*;
+import net.messages.ChunkMessage;
+import net.messages.Message;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 
 /**
  * Created by João on 25/03/2015.
@@ -30,14 +32,21 @@ public class MDRMulticastChannel extends MulticastChannel
     {
         String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
 
-        // TODO Add more for enhancement messages:
-        if(messages.length > 1)
+        try
         {
-            processMessage(messages[0]);
+            // TODO Add more for enhancement messages:
+            if(messages.length > 1)
+            {
+                processMessage(messages[0]);
+            }
+            else if(messages.length == 1)
+            {
+                processMessage(messages[0]);
+            }
         }
-        else if(messages.length == 1)
+        catch (InvalidParameterException e)
         {
-            processMessage(messages[0]);
+            System.err.println("MDBMulticastChannel::processHeader: Invalid header received. Ignoring header!");
         }
     }
 
@@ -47,7 +56,7 @@ public class MDRMulticastChannel extends MulticastChannel
         String messageType = fields[0];
         if(messageType.equals(ChunkMessage.s_TYPE))
         {
-            // TODO
+            ChunkMessage chunkMessage = ChunkMessage.createMessage(fields);
         }
     }
 }
