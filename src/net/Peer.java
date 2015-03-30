@@ -84,8 +84,12 @@ public class Peer implements IPeerService, IMulticastChannelListener
             // Create put chunk message:
             PutChunkMessage message = new PutChunkMessage(file.getVersion(), file.getFileId(), chunkNoField, replicationDegField);
 
-            // Send message to MDB channel:
-            m_mdbChannel.sendPutChunkMessage(message, chunk.getData());
+            Header header = new Header();
+            header.addMessage(message);
+            header.setBody(chunk.getData());
+
+            // Send header to MDB channel:
+            m_mdbChannel.sendHeader(header);
         }
 
         // Store file in the list:
@@ -113,7 +117,17 @@ public class Peer implements IPeerService, IMulticastChannelListener
     @Override
     synchronized public void onDataReceived(byte[] data)
     {
+        m_headers.add(new Header(data));
+    }
 
+    private static byte[] concatenateByteArrays(byte[] array1, byte[] array2)
+    {
+        byte[] output = new byte[array1.length + array2.length];
+
+        System.arraycopy(array1, 0, output, 0, array1.length);
+        System.arraycopy(array2, 0, output, array1.length, array2.length);
+
+        return output;
     }
 
     public static void main(String[] args) throws IOException, AlreadyBoundException

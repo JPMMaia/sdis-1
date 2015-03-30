@@ -16,24 +16,4 @@ public class MCMulticastChannel extends MulticastChannel
     {
         super(address, port);
     }
-
-    public void sendStoredMessage(StoredMessage message) throws IOException
-    {
-        sendMessage(message);
-    }
-
-    public void sendGetChunkMessage(GetChunkMessage message) throws IOException
-    {
-        sendMessage(message);
-    }
-
-    public void sendDeleteMessage(StoredMessage message) throws IOException
-    {
-        sendMessage(message);
-    }
-
-    public void sendRemovedMessage(RemovedMessage message) throws IOException
-    {
-        sendMessage(message);
-    }
 }

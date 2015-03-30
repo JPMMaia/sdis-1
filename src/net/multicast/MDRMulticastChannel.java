@@ -17,9 +17,4 @@ public class MDRMulticastChannel extends MulticastChannel
     {
         super(address, port);
     }
-
-    public void sendChunkMessage(ChunkMessage message, byte[] body) throws IOException
-    {
-        sendMessage(message);
-    }
 }

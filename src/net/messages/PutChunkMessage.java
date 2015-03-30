@@ -26,11 +26,9 @@ public class PutChunkMessage extends Message
     }
 
     @Override
-    public byte[] toBytes()
+    public String toString()
     {
-        String message = "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg + Message.s_CRLF;
-
-        return message.getBytes(StandardCharsets.US_ASCII);
+        return "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg;
     }
 
     public ChunkNo getChunkNo()
@@ -41,6 +39,12 @@ public class PutChunkMessage extends Message
     public ReplicationDeg getReplicationDeg()
     {
         return m_replicationDeg;
+    }
+
+    @Override
+    public String getType()
+    {
+        return s_TYPE;
     }
 
     public static PutChunkMessage createMessage(String[] messageSplit) throws InvalidParameterException

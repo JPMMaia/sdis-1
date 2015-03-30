@@ -3,12 +3,13 @@ package net.messages;
 import net.chunks.FileId;
 import net.chunks.Version;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Created by Miguel on 23-03-2015.
  */
 public abstract class Message
 {
-    public static final String s_CRLF = "\r\n";
     protected Version m_version;
     protected FileId m_fileId;
 
@@ -18,7 +19,13 @@ public abstract class Message
         m_fileId = fileId;
     }
 
-    public abstract byte[] toBytes();
+    @Override
+    public abstract String toString();
+
+    public byte[] toBytes()
+    {
+        return toString().getBytes(StandardCharsets.US_ASCII);
+    }
 
     public Version getVersion()
     {
@@ -29,6 +36,8 @@ public abstract class Message
     {
         return m_fileId;
     }
+
+    public abstract String getType();
 
     public static String[] splitMessage(String message)
     {

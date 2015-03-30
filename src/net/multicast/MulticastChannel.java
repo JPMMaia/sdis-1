@@ -63,9 +63,9 @@ public abstract class MulticastChannel implements Runnable
         m_listeners.remove(listener);
     }
 
-    protected void sendMessage(Message message) throws IOException
+    public void sendHeader(Header header) throws IOException
     {
-        byte[] data = message.toBytes();
+        byte[] data = header.toBytes();
 
         DatagramPacket packet = new DatagramPacket(data, data.length, m_address, m_port);
 

@@ -16,17 +16,19 @@ public class MessagesTester
     private static final String s_MESSAGE_1 = "PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg>";
     private static final String s_MESSAGE_2 = "PUTCHUNK2   <Version2>   <FileId2>   <ChunkNo2>   <ReplicationDeg2>  ";
     private static final String s_MESSAGE_3 = "PUTCHUNK 2.4 File_2_4 4 7";
+    private static final String s_BODY_1 = "Ola Bifes!";
     private static final String s_HEADER_1 = s_MESSAGE_1 + s_CRLF + s_CRLF;
     private static final String s_HEADER_2 = s_MESSAGE_1 + s_CRLF + s_MESSAGE_2 + s_CRLF + s_CRLF;
+    private static final String s_HEADER_3 = s_MESSAGE_3 + s_CRLF + s_CRLF + s_BODY_1;
 
     @Test
     public void testHeaderSplit()
     {
-        String[] split1 = Header.splitHeader(s_HEADER_1);
+        String[] split1 = Header.splitMessages(s_HEADER_1);
         Assert.assertEquals(1, split1.length);
         Assert.assertEquals(s_MESSAGE_1, split1[0]);
 
-        String[] split2 = Header.splitHeader(s_HEADER_2);
+        String[] split2 = Header.splitMessages(s_HEADER_2);
         Assert.assertEquals(2, split2.length);
         Assert.assertEquals(s_MESSAGE_1, split2[0]);
         Assert.assertEquals(s_MESSAGE_2, split2[1]);
@@ -68,5 +70,22 @@ public class MessagesTester
 
         ReplicationDeg replicationDeg = message.getReplicationDeg();
         Assert.assertEquals(7, replicationDeg.getValue());
+    }
+
+    @Test
+    public void testHeaderParsing()
+    {
+        Header header = new Header(s_HEADER_3.getBytes(Header.s_STANDARD_CHARSET));
+
+        // Check if message is a PUTCHUNK message:
+        Message message = header.getMessage(0);
+        Assert.assertEquals(PutChunkMessage.s_TYPE, message.getType());
+
+        // Test message:
+        PutChunkMessage putChunkMessage = (PutChunkMessage) message;
+        Assert.assertEquals(s_MESSAGE_3, putChunkMessage.toString());
+
+        // Test body:
+        Assert.assertArrayEquals(s_BODY_1.getBytes(Header.s_STANDARD_CHARSET), header.getBody());
     }
 }

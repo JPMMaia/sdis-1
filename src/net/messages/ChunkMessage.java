@@ -24,16 +24,20 @@ public class ChunkMessage extends Message
     }
 
     @Override
-    public byte[] toBytes()
+    public String toString()
     {
-        String message = "CHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + Message.s_CRLF;
-
-        return message.getBytes(StandardCharsets.US_ASCII);
+        return "Chunk " + m_version + " " + m_fileId + " " + m_chunkNo;
     }
 
     public ChunkNo getChunkNo()
     {
         return m_chunkNo;
+    }
+
+    @Override
+    public String getType()
+    {
+        return s_TYPE;
     }
 
     public static ChunkMessage createMessage(String[] messageSplit) throws InvalidParameterException

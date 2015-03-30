@@ -18,11 +18,15 @@ public class DeleteMessage extends Message
     }
 
     @Override
-    public byte[] toBytes()
+    public String toString()
     {
-        String message = "DELETE " + m_version + " " + m_fileId + Message.s_CRLF;
+        return "DELETE " + m_version + " " + m_fileId;
+    }
 
-        return message.getBytes(StandardCharsets.US_ASCII);
+    @Override
+    public String getType()
+    {
+        return s_TYPE;
     }
 
     public static DeleteMessage createMessage(String[] messageSplit) throws InvalidParameterException

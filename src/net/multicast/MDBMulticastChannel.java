@@ -18,9 +18,4 @@ public class MDBMulticastChannel extends MulticastChannel
     {
         super(address, port);
     }
-
-    public void sendPutChunkMessage(PutChunkMessage message, byte[] body) throws IOException
-    {
-        sendMessage(message);
-    }
 }
