@@ -23,7 +23,8 @@ public class ClientTester
         }
         catch (Exception e)
         {
-            Assert.fail(e.getMessage());
+            System.out.println(e);
+            e.printStackTrace();
         }
     }
 }
