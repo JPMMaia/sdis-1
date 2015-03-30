@@ -3,6 +3,7 @@ package net;
 import net.chunks.Chunk;
 import net.chunks.ChunkNo;
 import net.chunks.ReplicationDeg;
+import net.messages.Header;
 import net.messages.PutChunkMessage;
 import net.multicast.IMulticastChannelListener;
 import net.multicast.MCMulticastChannel;
@@ -18,6 +19,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Jo�o on 20/03/2015.
@@ -28,17 +30,22 @@ public class Peer implements IPeerService, IMulticastChannelListener
     public static final String s_HOST = "127.0.0.1";
     public static final int s_PORT = 1099;
 
-    private List<StoredFile> m_storedFiles;
+    private List<StoredFile> m_storedFiles = new ArrayList<>();
+    private LinkedBlockingQueue<Header> m_headers = new LinkedBlockingQueue<>();
     private MCMulticastChannel m_mcChannel;
     private MDBMulticastChannel m_mdbChannel;
     private MDRMulticastChannel m_mdrChannel;
 
     public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
-        m_storedFiles = new ArrayList<>();
         m_mcChannel = new MCMulticastChannel(mcAddress, mcPort);
+        m_mcChannel.addListener(this);
+
         m_mdbChannel = new MDBMulticastChannel(mdbAddress, mdbPort);
+        m_mdbChannel.addListener(this);
+
         m_mdrChannel = new MDRMulticastChannel(mdrAddress, mdrPort);
+        m_mdrChannel.addListener(this);
     }
 
     public void run()
@@ -106,7 +113,7 @@ public class Peer implements IPeerService, IMulticastChannelListener
     @Override
     synchronized public void onDataReceived(byte[] data)
     {
-        
+
     }
 
     public static void main(String[] args) throws IOException, AlreadyBoundException
