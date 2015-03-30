@@ -4,6 +4,7 @@ import net.chunks.Chunk;
 import net.chunks.ChunkNo;
 import net.chunks.ReplicationDeg;
 import net.messages.PutChunkMessage;
+import net.multicast.IMulticastChannelListener;
 import net.multicast.MCMulticastChannel;
 import net.multicast.MDBMulticastChannel;
 import net.multicast.MDRMulticastChannel;
@@ -21,7 +22,7 @@ import java.util.List;
 /**
  * Created by Jo�o on 20/03/2015.
  */
-public class Peer implements PeerService
+public class Peer implements IPeerService, IMulticastChannelListener
 {
     public static final String s_NAME = Peer.class.getName();
     public static final String s_HOST = "127.0.0.1";
@@ -102,6 +103,12 @@ public class Peer implements PeerService
         // TODO
     }
 
+    @Override
+    synchronized public void onDataReceived(byte[] data)
+    {
+        
+    }
+
     public static void main(String[] args) throws IOException, AlreadyBoundException
     {
         // 239.0.0.1 1 239.0.0.2 2 239.0.0.3 3
@@ -123,7 +130,7 @@ public class Peer implements PeerService
         peer.run();
 
         // Create peer service remote object:
-        PeerService peerService = (PeerService) UnicastRemoteObject.exportObject(peer, Peer.s_PORT);
+        IPeerService peerService = (IPeerService) UnicastRemoteObject.exportObject(peer, Peer.s_PORT);
 
         // Bind in the registry:
         Registry registry = LocateRegistry.createRegistry(Peer.s_PORT);

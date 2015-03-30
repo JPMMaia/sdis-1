@@ -22,11 +22,11 @@ public class MessagesTester
     @Test
     public void testHeaderSplit()
     {
-        String[] split1 = Message.splitHeader(s_HEADER_1);
+        String[] split1 = Header.splitHeader(s_HEADER_1);
         Assert.assertEquals(1, split1.length);
         Assert.assertEquals(s_MESSAGE_1, split1[0]);
 
-        String[] split2 = Message.splitHeader(s_HEADER_2);
+        String[] split2 = Header.splitHeader(s_HEADER_2);
         Assert.assertEquals(2, split2.length);
         Assert.assertEquals(s_MESSAGE_1, split2[0]);
         Assert.assertEquals(s_MESSAGE_2, split2[1]);

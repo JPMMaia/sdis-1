@@ -34,9 +34,4 @@ public abstract class Message
     {
         return message.trim().split("\\s+");
     }
-
-    public static String[] splitHeader(String header)
-    {
-        return header.split("(\\r\\n)+");
-    }
 }

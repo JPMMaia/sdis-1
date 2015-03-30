@@ -1,22 +1,27 @@
 package net.multicast;
 
+import net.messages.Header;
 import net.messages.Message;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jo�o on 20/03/2015.
  */
 public abstract class MulticastChannel implements Runnable
 {
-    protected static final int s_MAX_PACKET_SIZE = 65000;
-    protected byte[] m_buffer = new byte[s_MAX_PACKET_SIZE];
-    protected MulticastSocket m_socket;
-    protected InetAddress m_address;
-    protected int m_port;
+    private static final int s_MAX_PACKET_SIZE = 65000;
+    private byte[] m_buffer = new byte[s_MAX_PACKET_SIZE];
+    private MulticastSocket m_socket;
+    private InetAddress m_address;
+    private int m_port;
+    private List<IMulticastChannelListener> m_listeners = new ArrayList<>();
 
     public MulticastChannel(String address, int port) throws IOException
     {
@@ -39,7 +44,7 @@ public abstract class MulticastChannel implements Runnable
                 DatagramPacket packet = new DatagramPacket(m_buffer, s_MAX_PACKET_SIZE);
                 m_socket.receive(packet);
 
-                processHeader(packet.getData());
+                notifyDataReceived(packet.getData());
             }
             catch (IOException e)
             {
@@ -48,7 +53,15 @@ public abstract class MulticastChannel implements Runnable
         }
     }
 
-    protected abstract void processHeader(byte[] header);
+    public void addListener(IMulticastChannelListener listener)
+    {
+        m_listeners.add(listener);
+    }
+
+    public void removeListener(IMulticastChannelListener listener)
+    {
+        m_listeners.remove(listener);
+    }
 
     protected void sendMessage(Message message) throws IOException
     {
@@ -57,5 +70,13 @@ public abstract class MulticastChannel implements Runnable
         DatagramPacket packet = new DatagramPacket(data, data.length, m_address, m_port);
 
         m_socket.send(packet);
+    }
+
+    private void notifyDataReceived(byte[] data)
+    {
+        for (IMulticastChannelListener listener : m_listeners)
+        {
+            listener.onDataReceived(data);
+        }
     }
 }

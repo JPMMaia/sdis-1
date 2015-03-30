@@ -1,5 +1,6 @@
 package net.multicast;
 
+import net.messages.Header;
 import net.messages.Message;
 import net.messages.PutChunkMessage;
 
@@ -21,39 +22,5 @@ public class MDBMulticastChannel extends MulticastChannel
     public void sendPutChunkMessage(PutChunkMessage message, byte[] body) throws IOException
     {
         sendMessage(message);
-    }
-
-    @Override
-    protected void processHeader(byte[] header)
-    {
-        String[] messages = Message.splitHeader(new String(header, StandardCharsets.US_ASCII));
-
-        try
-        {
-            // TODO Add more for enhancement messages:
-            if(messages.length > 1)
-            {
-                processMessage(messages[0]);
-            }
-            else if(messages.length == 1)
-            {
-                processMessage(messages[0]);
-            }
-        }
-        catch(InvalidParameterException e)
-        {
-            System.err.println("MDBMulticastChannel::processHeader: Invalid header received. Ignoring header!");
-        }
-    }
-
-    private void processMessage(String message)
-    {
-        String[] fields = Message.splitMessage(message);
-        String messageType = fields[0];
-        if(messageType.equals(PutChunkMessage.s_TYPE))
-        {
-            PutChunkMessage putChunkMessage = PutChunkMessage.createMessage(fields);
-            System.out.println("MDBMulticastChannel::processMessage: fileId -> " + putChunkMessage.getFileId() + ";");
-        }
     }
 }

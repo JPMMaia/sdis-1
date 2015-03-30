@@ -17,7 +17,7 @@ public class ClientTester
         try
         {
             Registry registry = LocateRegistry.getRegistry(Peer.s_HOST, Peer.s_PORT);
-            PeerService peerService = (PeerService) registry.lookup(Peer.s_NAME);
+            IPeerService peerService = (IPeerService) registry.lookup(Peer.s_NAME);
 
             peerService.backupFile("test_resources\\test.txt", 1);
         }
