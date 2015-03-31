@@ -121,23 +121,24 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     @Override
     synchronized public void onDataReceived(byte[] data, int length, String peerAddress)
     {
-        Header receivedHeader = new Header(data, length);
-
-        // Ignore all headers with more than one message
-        if (receivedHeader.getMessageNumber() == 1)
+        try
         {
-            Message receivedMessage = receivedHeader.getMessage(0);
-            switch(receivedMessage.getType())
+            Header receivedHeader = new Header(data, length);
+            // Ignore all headers with more than one message
+            if (receivedHeader.getMessageNumber() == 1)
             {
-                // TODO
-                // Received PutChunk => If I'm the owner I don't save
-                case PutChunkMessage.s_TYPE:
-                    new Thread(new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this)).start();
-                    break;
+                Message receivedMessage = receivedHeader.getMessage(0);
+                switch(receivedMessage.getType())
+                {
+                    // TODO
+                    // Received PutChunk => If I'm the owner I don't save
+                    case PutChunkMessage.s_TYPE:
+                        new Thread(new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this)).start();
+                        break;
 
-                case StoredMessage.s_TYPE:
-                    new Thread(new ProcessStoredTask((StoredMessage) receivedMessage, peerAddress, this)).start();
-                    break;
+                    case StoredMessage.s_TYPE:
+                        new Thread(new ProcessStoredTask((StoredMessage) receivedMessage, peerAddress, this)).start();
+                        break;
 
 
                 /*
@@ -158,10 +159,16 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                     break;
                 */
 
-                default:
-                    System.out.println("Unknown message received: " + receivedMessage.getType());
-                    break;
+                    default:
+                        System.out.println("Unknown message received: " + receivedMessage.getType());
+                        break;
+                }
             }
+        }
+        catch(InvalidParameterException e)
+        {
+            System.err.println("Peer::onDataReceived: Ignoring invalid header!");
+            return;
         }
     }
 

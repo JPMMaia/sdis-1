@@ -13,11 +13,11 @@ public class Version
     public Version(String value) throws InvalidParameterException
     {
         if(value.length() != 3)
-            throw new InvalidParameterException();
+            throw new InvalidParameterException("Version::constructor: Value must have a length of 3!");
 
         m_version = value.charAt(0);
         if(value.charAt(1) != '.')
-            throw new InvalidParameterException();
+            throw new InvalidParameterException("Version::constructor: Second char must be <.>!");
 
         m_subVersion = value.charAt(2);
     }

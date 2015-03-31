@@ -7,6 +7,7 @@ import java.security.InvalidParameterException;
  */
 public class ChunkNo
 {
+    private static final int s_MAX_VALUE = 1000000;
     private int m_value;
 
     public ChunkNo(String value) throws InvalidParameterException
@@ -42,7 +43,7 @@ public class ChunkNo
 
     private static void throwIfInvalid(int value) throws InvalidParameterException
     {
-        if (value < 0 || value > 1000000)
-            throw new IllegalArgumentException("ChunkNo::constructor: Ilegal argument in chunkNo: " + value);
+        if (value < 0 || value > s_MAX_VALUE)
+            throw new InvalidParameterException("ChunkNo::constructor: Value out of range [0, " + s_MAX_VALUE + "]. Value was " + value);
     }
 }

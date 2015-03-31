@@ -1,7 +1,10 @@
 package net.messages;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +22,7 @@ public class Header
     {
     }
 
-    public Header(byte[] header, int length)
+    public Header(byte[] header, int length) throws InvalidParameterException
     {
         // Split head from body:
         byte[][] split = splitHeader(header, length);
@@ -75,9 +78,11 @@ public class Header
         m_messages.add(message);
     }
 
-    public void addMessage(String message)
+    public void addMessage(String message) throws InvalidParameterException
     {
         String[] fields = Message.splitMessage(message);
+        if(fields.length < 3)
+            throw new InvalidParameterException();
 
         String messageType = fields[0];
         switch (messageType)
@@ -105,6 +110,9 @@ public class Header
             case StoredMessage.s_TYPE:
                 addMessage(StoredMessage.createMessage(fields));
                 break;
+
+            default:
+                throw new InvalidParameterException();
         }
     }
 
@@ -143,8 +151,10 @@ public class Header
         return header.split("(\\r\\n)+");
     }
 
-    public static byte[][] splitHeader(byte[] header, int length)
+    public static byte[][] splitHeader(byte[] header, int length) throws InvalidParameterException
     {
+        boolean found = false;
+
         int delimeterPosition = 0;
         for(int i = 0; i < length - 3; i++)
         {
@@ -152,10 +162,16 @@ public class Header
                     && header[i + 1] == Header.s_CRLF.charAt(1)
                     && header[i + 2] == Header.s_CRLF.charAt(0)
                     && header[i + 3] == Header.s_CRLF.charAt(1))
+            {
+                found = true;
                 break;
+            }
 
             delimeterPosition++;
         }
+
+        if(!found)
+            throw new InvalidParameterException("Header::splitHeader: <CRLF><CRLF> not found!");
 
         byte[][] output = new byte[2][];
         output[0] = new byte[delimeterPosition];

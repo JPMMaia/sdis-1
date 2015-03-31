@@ -3,6 +3,7 @@ package net.chunks;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -11,10 +12,14 @@ import java.security.NoSuchAlgorithmException;
  */
 public class FileId
 {
+    private static final int s_MAX_SIZE = 64;
     private String m_value;
 
-    public FileId(String value)
+    public FileId(String value) throws InvalidParameterException
     {
+        if(value.length() != s_MAX_SIZE)
+            throw new InvalidParameterException("FileId::constructor: Value must have a length of 64!");
+
         m_value = value;
     }
 

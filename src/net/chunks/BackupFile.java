@@ -40,7 +40,7 @@ public class BackupFile
         }
         catch(Exception e)
         {
-            System.err.println("BackupFile: not found! Backup aborted. Filename: " + e.toString());
+            System.err.println("BackupFile::constructor: not found! Backup aborted. Filename: " + e.toString());
         }
         finally
         {
@@ -100,7 +100,7 @@ public class BackupFile
         }
         catch (IOException e)
         {
-            System.err.println("StoredFile::closeFileStream: Error closing file: " + e.toString());
+            System.err.println("BackupFile::closeFileStream: Error closing file: " + e.toString());
             e.printStackTrace();
             System.exit(-2);
         }
