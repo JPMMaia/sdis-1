@@ -118,6 +118,11 @@ public class Header
         return m_messages.get(index);
     }
 
+    public int getMessageNumber()
+    {
+        return m_messages.size();
+    }
+
     public byte[] getBody()
     {
         return m_body;

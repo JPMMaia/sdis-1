@@ -29,6 +29,21 @@ public class FileId
     }
 
     @Override
+    public int hashCode()
+    {
+        return m_value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!(obj instanceof FileId))
+            return false;
+        else
+            return this.m_value.equals(((FileId) obj).m_value);
+    }
+
+    @Override
     public String toString()
     {
         return m_value;

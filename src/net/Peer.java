@@ -1,14 +1,19 @@
 package net;
 
 import net.chunks.Chunk;
-import net.chunks.ChunkNo;
-import net.chunks.ReplicationDeg;
+import net.chunks.FileId;
+import net.chunks.StoredFile;
 import net.messages.Header;
+import net.messages.Message;
 import net.messages.PutChunkMessage;
+import net.messages.StoredMessage;
 import net.multicast.IMulticastChannelListener;
 import net.multicast.MCMulticastChannel;
 import net.multicast.MDBMulticastChannel;
 import net.multicast.MDRMulticastChannel;
+import net.services.BackupService;
+import net.services.UserService;
+import net.tasks.StoreTask;
 
 import java.io.IOException;
 import java.rmi.AlreadyBoundException;
@@ -18,23 +23,29 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Jo�o on 20/03/2015.
  */
-public class Peer implements IPeerService, IMulticastChannelListener
+public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataChange
 {
-    public static final String s_NAME = Peer.class.getName();
-    public static final String s_HOST = "127.0.0.1";
-    public static final int s_PORT = 1099;
+    // RMI Service Attributes:
+    public static final String s_SERVICE_NAME = Peer.class.getName();
+    public static final String s_SERVICE_HOST = "localhost";
+    public static final int s_SERVICE_PORT = 1099;
 
-    private List<StoredFile> m_storedFiles = new ArrayList<>();
-    private LinkedBlockingQueue<Header> m_headers = new LinkedBlockingQueue<>();
+    // Multicast channels:
     private MCMulticastChannel m_mcChannel;
     private MDBMulticastChannel m_mdbChannel;
     private MDRMulticastChannel m_mdrChannel;
+
+    // Data the peer needs to maintain:
+    private List<StoredFile> m_storedFiles = new ArrayList<>();
+    private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
+    private HashMap<Chunk, ArrayList<String>> m_storedChunks = new HashMap<>(); // Arraylist of IP Addresses for each Chunk
 
     public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
@@ -48,7 +59,7 @@ public class Peer implements IPeerService, IMulticastChannelListener
         m_mdrChannel.addListener(this);
     }
 
-    public void run()
+    synchronized public void run()
     {
         Thread mcThread = new Thread(m_mcChannel);
         mcThread.start();
@@ -61,63 +72,77 @@ public class Peer implements IPeerService, IMulticastChannelListener
     }
 
     @Override
-    public void backupFile(String filename, int replicationDeg) throws InvalidParameterException, IOException
+    synchronized public void backupFile(String filename, int replicationDeg) throws InvalidParameterException, IOException
     {
         System.out.println("Peer::backupFile: filename -> " + filename + "; replicationDeg -> " + replicationDeg);
 
-        if(!(replicationDeg >= 0 && replicationDeg <= 9))
-            throw new InvalidParameterException();
+        UserService backup = new BackupService(filename, replicationDeg, this);
+        new Thread(backup).start();
+    }
 
-        // Create stored file:
-        StoredFile file = new StoredFile(filename);
+    @Override
+    synchronized public void restoreFile(String filename) throws RemoteException
+    {
+        // TODO
+    }
 
-        // For each file chunk:
-        Chunk[] chunks = file.getChunks();
-        for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++)
+    @Override
+    synchronized public void deleteFile(String filename) throws RemoteException
+    {
+        // TODO
+    }
+
+    @Override
+    synchronized public void setMaxDiskSpace(int bytes) throws RemoteException
+    {
+        // TODO
+    }
+
+    @Override
+    synchronized public void onDataReceived(byte[] data, String peerAddress)
+    {
+        Header receivedHeader = new Header(data);
+
+        // Ignore all headers with more than one message
+        if (receivedHeader.getMessageNumber() == 1)
         {
-            Chunk chunk = chunks[chunkNo];
+            Message receivedMessage = receivedHeader.getMessage(0);
+            switch(receivedMessage.getType())
+            {
+                // TODO
+                /*
+                case PutChunkMessage.s_TYPE:
+                    new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this);
+                    break;
 
-            // Create message fields:
-            ChunkNo chunkNoField = new ChunkNo(chunkNo);
-            ReplicationDeg replicationDegField = new ReplicationDeg(replicationDeg);
+                case StoredMessage.s_TYPE:
+                    new StoredTask((StoredMessage) receivedMessage, peerAddress, this);
+                    break;
+                    */
 
-            // Create put chunk message:
-            PutChunkMessage message = new PutChunkMessage(file.getVersion(), file.getFileId(), chunkNoField, replicationDegField);
+                /*
+                case "GETCHUNK":
+                    new GetChunkTask((GetChunkMessage) receivedMessage, peerAddress, this);
+                    break;
 
-            Header header = new Header();
-            header.addMessage(message);
-            header.setBody(chunk.getData());
+                case "CHUNK":
+                    new ChunkTask((ChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this);
+                    break;
 
-            // Send header to MDB channel:
-            m_mdbChannel.sendHeader(header);
+                case "DELETE":
+                    new DeleteTask((DeleteMessage) receivedMessage, peerAddress, this);
+                    break;
+
+                case "REMOVE":
+                    new RemoveTask((RemovedMessage) receivedMessage, peerAddress, this);
+                    break;
+                */
+
+                default:
+                    System.out.println("Unknown message received: " + receivedMessage.getType());
+                    break;
+            }
         }
-
-        // Store file in the list:
-        m_storedFiles.add(file);
-    }
-
-    @Override
-    public void restoreFile(String filename) throws RemoteException
-    {
-        // TODO
-    }
-
-    @Override
-    public void deleteFile(String filename) throws RemoteException
-    {
-        // TODO
-    }
-
-    @Override
-    public void setMaxDiskSpace(int bytes) throws RemoteException
-    {
-        // TODO
-    }
-
-    @Override
-    synchronized public void onDataReceived(byte[] data)
-    {
-        m_headers.add(new Header(data));
     }
 
     private static byte[] concatenateByteArrays(byte[] array1, byte[] array2)
@@ -151,12 +176,40 @@ public class Peer implements IPeerService, IMulticastChannelListener
         peer.run();
 
         // Create peer service remote object:
-        IPeerService peerService = (IPeerService) UnicastRemoteObject.exportObject(peer, Peer.s_PORT);
+        IPeerService peerService = (IPeerService) UnicastRemoteObject.exportObject(peer, Peer.s_SERVICE_PORT);
 
         // Bind in the registry:
-        Registry registry = LocateRegistry.createRegistry(Peer.s_PORT);
+        Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
         registry.rebind(Peer.class.getName(), peerService);
 
         System.out.println("Peer::main: Ready!");
+    }
+
+    @Override
+    public void sendHeaderMDB(Header header)
+    {
+        try
+        {
+            m_mdbChannel.sendHeader(header);
+        }
+        catch (IOException e)
+        {
+            System.out.println("Oops, looks like sending to MDB went wrong!");
+        }
+    }
+
+    @Override
+    synchronized public void addStoredFile(StoredFile file)
+    {
+        m_storedFiles.add(file);
+    }
+
+    @Override
+    synchronized public int getRealReplicationDeg(Chunk chunk)
+    {
+        if (!m_storedChunks.containsKey(chunk))
+            return 0;
+        else
+            return m_storedChunks.get(chunk).size();
     }
 }

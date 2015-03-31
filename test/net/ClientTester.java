@@ -1,6 +1,5 @@
 package net;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.rmi.registry.LocateRegistry;
@@ -16,8 +15,8 @@ public class ClientTester
     {
         try
         {
-            Registry registry = LocateRegistry.getRegistry(Peer.s_HOST, Peer.s_PORT);
-            IPeerService peerService = (IPeerService) registry.lookup(Peer.s_NAME);
+            Registry registry = LocateRegistry.getRegistry(Peer.s_SERVICE_HOST, Peer.s_SERVICE_PORT);
+            IPeerService peerService = (IPeerService) registry.lookup(Peer.s_SERVICE_NAME);
 
             peerService.backupFile("test_resources\\test.txt", 1);
         }

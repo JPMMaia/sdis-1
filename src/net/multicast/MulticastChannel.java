@@ -44,7 +44,7 @@ public abstract class MulticastChannel implements Runnable
                 DatagramPacket packet = new DatagramPacket(m_buffer, s_MAX_PACKET_SIZE);
                 m_socket.receive(packet);
 
-                notifyDataReceived(packet.getData());
+                notifyDataReceived(packet.getData(), packet.getAddress().toString());
             }
             catch (IOException e)
             {
@@ -72,11 +72,11 @@ public abstract class MulticastChannel implements Runnable
         m_socket.send(packet);
     }
 
-    private void notifyDataReceived(byte[] data)
+    private void notifyDataReceived(byte[] data, String peerAddress)
     {
         for (IMulticastChannelListener listener : m_listeners)
         {
-            listener.onDataReceived(data);
+            listener.onDataReceived(data, peerAddress);
         }
     }
 }
