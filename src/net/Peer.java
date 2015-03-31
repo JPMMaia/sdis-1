@@ -77,12 +77,18 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void backupFile(String filename, int replicationDeg) throws InvalidParameterException, IOException
+    synchronized public void backupFile(String filename, int replicationDeg) throws InvalidParameterException, IOException, InterruptedException
     {
         System.out.println("Peer::backupFile: filename -> " + filename + "; replicationDeg -> " + replicationDeg);
 
         UserService backup = new BackupService(filename, replicationDeg, this);
-        new Thread(backup).start();
+        Thread thread = new Thread(backup);
+        thread.start();
+        thread.join();
+
+        System.out.println("\n\n=== ACABEI TUDO VAI DAR: ====");
+        System.out.println(m_homeChunks);
+        System.out.println(m_storedChunks);
 
         System.out.println("== Acabei de iniciar backup ==!");
     }
