@@ -1,7 +1,7 @@
 package net;
 
 import net.chunks.Chunk;
-import net.chunks.StoredFile;
+import net.chunks.BackupFile;
 import net.messages.Header;
 
 /**
@@ -10,6 +10,18 @@ import net.messages.Header;
 public interface IPeerDataChange
 {
     void sendHeaderMDB(Header header);
-    void addStoredFile(StoredFile file);
-    int getRealReplicationDeg(Chunk chunk);
+    void sendHeaderMDR(Header header);
+    void sendHeaderMC(Header header);
+
+    void addHomeFile(BackupFile file);
+    void addHomeChunk(String identifier);
+    void addStoredChunk(Chunk chunk);
+    void addHomeChunkIP(String identifier, String address);
+    void addStoredChunkIP(Chunk chunk, String address);
+
+    boolean isHomeChunk(String identifier);
+    boolean isStoredChunk(Chunk chunk);
+
+    long getFreeSpace();
+    int getRealReplicationDeg(String identifier);
 }

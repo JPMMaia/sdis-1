@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Created by Miguel on 23-03-2015.
  */
-public class StoredFile
+public class BackupFile
 {
     private static final int s_MAX_CHUNK_SIZE = 64000;
     private long m_fileSize;
@@ -16,7 +16,7 @@ public class StoredFile
     private ReplicationDeg m_replicationDegree;
     private FileId m_fileId;
 
-    public StoredFile(String filename, ReplicationDeg replication)
+    public BackupFile(String filename, ReplicationDeg replication)
     {
         m_filename = filename;
         m_replicationDegree = replication;
@@ -40,9 +40,7 @@ public class StoredFile
         }
         catch(Exception e)
         {
-            System.err.println("StoredFile::constructor: Error while reading from file: " + e.toString());
-            e.printStackTrace();
-            System.exit(-1);
+            System.err.println("BackupFile: not found! Backup aborted. Filename: " + e.toString());
         }
         finally
         {
@@ -120,6 +118,6 @@ public class StoredFile
 
     public static void main(String[] args)
     {
-        new StoredFile("C:\\Users\\Miguel\\IdeaProjects\\gosto.txt", new ReplicationDeg(3));
+        new BackupFile("C:\\Users\\Miguel\\IdeaProjects\\gosto2.txt", new ReplicationDeg(3)).divideInChunks();
     }
 }

@@ -1,5 +1,7 @@
 package net.chunks;
 
+import net.messages.Header;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -12,14 +14,20 @@ public class Chunk
     private ReplicationDeg m_optimalReplicationDegree;
     private byte[] m_data;
 
-    public Chunk(FileId fileId, ChunkNo chunkNo, ReplicationDeg replicationOptimal, byte[] data) throws UnsupportedEncodingException
+    public Chunk(FileId fileId, ChunkNo chunkNo, ReplicationDeg replicationOptimal, byte[] data)
     {
         m_fileId = fileId;
         m_chunkNo = chunkNo;
         m_optimalReplicationDegree = replicationOptimal;
         m_data = data;
 
-        System.out.println("Chunk::constructor: fileId -> " + m_fileId +  "; length -> " + data.length + "; data -> " + new String(data, "UTF-8"));
+        System.out.println("Chunk::constructor: fileId -> " + m_fileId +  "; length -> " + data.length + "; data -> " + new String(data, Header.s_STANDARD_CHARSET));
+    }
+
+    public Chunk(FileId fileId, ChunkNo chunkNo)
+    {
+        m_fileId = fileId;
+        m_chunkNo = chunkNo;
     }
 
     public FileId getFileId()
@@ -30,6 +38,11 @@ public class Chunk
     public ChunkNo getChunkNo()
     {
         return m_chunkNo;
+    }
+
+    public String getIdentifier()
+    {
+        return "" + m_fileId + m_chunkNo;
     }
 
     public ReplicationDeg getOptimalReplicationDeg()
@@ -45,8 +58,7 @@ public class Chunk
     @Override
     public int hashCode()
     {
-        String hash = m_fileId.toString() + m_chunkNo.toString();
-        return hash.hashCode();
+        return getIdentifier().hashCode();
     }
 
     @Override
@@ -55,6 +67,14 @@ public class Chunk
         if (!(obj instanceof Chunk))
             return false;
         else
-            return this.equals(obj);
+        {
+            return this.getIdentifier().equals(((Chunk) obj).getIdentifier());
+        }
+    }
+
+    @Override
+    public String toString()
+    {
+        return getIdentifier();
     }
 }

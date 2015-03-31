@@ -67,6 +67,8 @@ public abstract class MulticastChannel implements Runnable
     {
         byte[] data = header.toBytes();
 
+        System.out.println("DEBUG: => " + new String(data, Header.s_STANDARD_CHARSET));
+
         DatagramPacket packet = new DatagramPacket(data, data.length, m_address, m_port);
 
         m_socket.send(packet);
@@ -74,6 +76,8 @@ public abstract class MulticastChannel implements Runnable
 
     private void notifyDataReceived(byte[] data, String peerAddress)
     {
+        System.out.println("DEBUG: <= " + new String(data, Header.s_STANDARD_CHARSET));
+
         for (IMulticastChannelListener listener : m_listeners)
         {
             listener.onDataReceived(data, peerAddress);

@@ -1,33 +1,65 @@
 package net.tasks;
 
 import net.IPeerDataChange;
+import net.Utils.RandomNumber;
 import net.chunks.Chunk;
+import net.chunks.Version;
+import net.messages.Header;
 import net.messages.PutChunkMessage;
+import net.messages.StoredMessage;
+
+import java.util.Random;
 
 /**
  * Created by Miguel on 31-03-2015.
  */
 public class StoreTask extends Task
 {
-    private Chunk m_chunk;
+    private PutChunkMessage m_msg;
+    private byte[] m_body;
+    String m_peerAddress;
 
-    // TODO adapatar como em baixo
-    public StoreTask(IPeerDataChange peer)
+    public StoreTask(PutChunkMessage message, byte[] body, String peerAddress, IPeerDataChange peer)
     {
         super(peer);
+        m_msg = message;
+        m_body = body;
+        m_peerAddress = peerAddress;
     }
-
-    /*
-    public PutChunkTask(PutChunkMessage message, byte[] body, String peerAddress, IPeerDataChange peer)
-    {
-        super(peer);
-        m_chunk = chunk;
-    }
-    */
 
     @Override
     public void run()
     {
+        Chunk storedChunk = new Chunk(m_msg.getFileId(), m_msg.getChunkNo(), m_msg.getReplicationDeg(), m_body);
 
+        // Only save chunks that are not mine:
+        if (!m_peerAccess.isHomeChunk(storedChunk.getIdentifier()))
+        {
+            // If I'm not storing this chunk:
+            if (!m_peerAccess.isStoredChunk(storedChunk))
+            {
+                // Only if I have space remaining:
+                long remainingSpace = m_peerAccess.getFreeSpace() - m_body.length;
+                if (remainingSpace >= 0)
+                {
+                    m_peerAccess.addStoredChunk(storedChunk);
+
+                    try
+                    { Thread.sleep(RandomNumber.getInt(0, 400)); }
+                    catch (InterruptedException e)
+                    { e.printStackTrace(); }
+
+                    // Send Stored Message:
+                    StoredMessage message = new StoredMessage(new Version('1','0'), storedChunk.getFileId(), storedChunk.getChunkNo());
+                    Header header = new Header();
+                    header.addMessage(message);
+                    m_peerAccess.sendHeaderMC(header);
+                }
+            }
+
+            // If I'm already storing this chunk: ignore it
+        }
+
+        // If it's MY chunk from one of my files: ignore it
     }
 }

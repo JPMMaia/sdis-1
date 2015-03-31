@@ -27,7 +27,7 @@ public class PutChunkTask extends Task
         try
         {
             // Create put chunk message:
-            PutChunkMessage message = new PutChunkMessage(new Version('1', '0'), m_chunk.getFileId(), m_chunk.getChunkNo(), m_chunk.getOptimalReplicationDeg());
+            PutChunkMessage message = new PutChunkMessage(new Version('1','0'), m_chunk.getFileId(), m_chunk.getChunkNo(), m_chunk.getOptimalReplicationDeg());
             Header header = new Header();
             header.addMessage(message);
             header.setBody(m_chunk.getData());
@@ -43,8 +43,8 @@ public class PutChunkTask extends Task
 
                 Thread.sleep(delayTime);
 
-                // Backup success:
-                if (m_peerAccess.getRealReplicationDeg(m_chunk) >= m_chunk.getOptimalReplicationDeg().getValue())
+                // Backup success: TODO isto vai ter ser mudado para ser um PutChunk genérico => pode ser nos storedChunks
+                if (m_peerAccess.getRealReplicationDeg(m_chunk.getIdentifier()) >= m_chunk.getOptimalReplicationDeg().getValue())
                 {
                     setReturn(SENT);
                     return;
