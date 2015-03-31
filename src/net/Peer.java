@@ -119,11 +119,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 // TODO
                 // Received PutChunk => If I'm the owner I don't save
                 case PutChunkMessage.s_TYPE:
-                    new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this);
+                    new Thread(new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this)).start();
                     break;
 
                 case StoredMessage.s_TYPE:
-                    new ProcessStoredTask((StoredMessage) receivedMessage, peerAddress, this);
+                    new Thread(new ProcessStoredTask((StoredMessage) receivedMessage, peerAddress, this)).start();
                     break;
 
 
