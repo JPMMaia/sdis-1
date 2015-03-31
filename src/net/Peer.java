@@ -48,7 +48,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private long m_freeStorage = m_totalStorage;
     private List<BackupFile> m_homeFiles = new ArrayList<>();
     private ConcurrentHashMap<String, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // Arraylist of IP Addresses for each Chunk
-    private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks;
+    private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>();
 
     private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
 
