@@ -19,10 +19,10 @@ public class Header
     {
     }
 
-    public Header(byte[] header)
+    public Header(byte[] header, int length)
     {
         // Split head from body:
-        byte[][] split = splitHeader(header);
+        byte[][] split = splitHeader(header, length);
 
         // Convert head to string:
         String messages = new String(split[0], Header.s_STANDARD_CHARSET);
@@ -143,10 +143,10 @@ public class Header
         return header.split("(\\r\\n)+");
     }
 
-    public static byte[][] splitHeader(byte[] header)
+    public static byte[][] splitHeader(byte[] header, int length)
     {
         int delimeterPosition = 0;
-        for(int i = 0; i < header.length - 3; i++)
+        for(int i = 0; i < length - 3; i++)
         {
             if(header[i] == Header.s_CRLF.charAt(0)
                     && header[i + 1] == Header.s_CRLF.charAt(1)
@@ -162,7 +162,7 @@ public class Header
         System.arraycopy(header, 0, output[0], 0, output[0].length);
         delimeterPosition += 4;
 
-        output[1] = new byte[header.length - delimeterPosition];
+        output[1] = new byte[length - delimeterPosition];
         System.arraycopy(header, delimeterPosition, output[1], 0, output[1].length);
 
         return output;

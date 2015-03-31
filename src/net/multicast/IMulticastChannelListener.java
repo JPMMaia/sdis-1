@@ -5,5 +5,5 @@ package net.multicast;
  */
 public interface IMulticastChannelListener
 {
-    void onDataReceived(byte[] data, String peerAddress);
+    void onDataReceived(byte[] data, int length, String peerAddress);
 }

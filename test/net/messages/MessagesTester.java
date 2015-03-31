@@ -75,7 +75,8 @@ public class MessagesTester
     @Test
     public void testHeaderParsing()
     {
-        Header header = new Header(s_HEADER_3.getBytes(Header.s_STANDARD_CHARSET));
+        byte[] data = s_HEADER_3.getBytes(Header.s_STANDARD_CHARSET);
+        Header header = new Header(data, data.length);
 
         // Check if message is a PUTCHUNK message:
         Message message = header.getMessage(0);

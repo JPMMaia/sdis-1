@@ -119,9 +119,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void onDataReceived(byte[] data, String peerAddress)
+    synchronized public void onDataReceived(byte[] data, int length, String peerAddress)
     {
-        Header receivedHeader = new Header(data);
+        Header receivedHeader = new Header(data, length);
 
         // Ignore all headers with more than one message
         if (receivedHeader.getMessageNumber() == 1)
