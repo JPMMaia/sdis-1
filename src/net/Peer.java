@@ -164,13 +164,13 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Delete traces of this home file:
             deleteHomeFile(file.getFileId());
 
-            // Send delete:
+            // Send deleteFile:
             DeleteMessage message = new DeleteMessage(new Version('1','0'), file.getFileId());
             Header header = new Header();
             header.addMessage(message);
             sendHeaderMC(header);
 
-            return "Peer::deleteFile Your delete file request was registered! Please come again :)";
+            return "Peer::deleteFile Your deleteFile file request was registered! Please come again :)";
         }
         catch(Exception e)
         {
@@ -314,7 +314,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         {
             Map.Entry<Chunk, HashSet<String>> entry = it.next();
             if(entry.getKey().getFileId().equals(fileId))
-                it.remove();
+            {
+                entry.getKey().deleteFile(); // delete physical file
+                it.remove(); // delete from hashtable
+            }
         }
     }
 
@@ -420,7 +423,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         listIPs.add("localhost");
         m_storedChunks.put(chunk, listIPs);
 
-        // Store the chunk physically
+        // Store the chunk physically in a file:
         chunk.storeFile();
     }
 
