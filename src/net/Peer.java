@@ -161,6 +161,15 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             if (m_activeServices.containsKey(file.getFileId()))
                 return "Peer::deleteFile An action regarding that file is already executing, please wait!";
 
+            // Delete traces of this home file:
+            deleteHomeFile(file.getFileId());
+
+            // Send delete:
+            DeleteMessage message = new DeleteMessage(new Version('1','0'), file.getFileId());
+            Header header = new Header();
+            header.addMessage(message);
+            sendHeaderMC(header);
+
             return "Peer::deleteFile Your delete file request was registered! Please come again :)";
         }
         catch(Exception e)
