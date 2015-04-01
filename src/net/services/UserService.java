@@ -1,16 +1,26 @@
 package net.services;
 
+import net.IPeerDataChange;
+import net.chunks.BackupFile;
+import net.chunks.FileId;
+
 /**
  * Created by Miguel on 30-03-2015.
  */
 public abstract class UserService implements Runnable
 {
-    public enum ServiceType {UPDATE, RESTORE};
-    private ServiceType m_type;
+    protected BackupFile m_file;
+    protected IPeerDataChange m_peerAccess;
 
-    public ServiceType getType()
+    public UserService(BackupFile file, IPeerDataChange peer)
     {
-        return m_type;
+        m_file = file;
+        m_peerAccess = peer;
+    }
+
+    public FileId getFileId()
+    {
+        return m_file.getFileId();
     }
 
 

@@ -24,9 +24,9 @@ public class ProcessStoredTask extends Task
     {
         Chunk chunkKey = new Chunk(m_msg.getFileId(), m_msg.getChunkNo());
 
-        if (m_peerAccess.isHomeChunk(chunkKey.getIdentifier()))
+        if (m_peerAccess.isHomeChunk(chunkKey))
         {
-            m_peerAccess.addHomeChunkIP(chunkKey.getIdentifier(), m_peerAddress);
+            m_peerAccess.addHomeChunkIP(chunkKey, m_peerAddress);
         }
         else if (m_peerAccess.isStoredChunk(chunkKey))
         {

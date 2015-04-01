@@ -33,7 +33,7 @@ public class StoreTask extends Task
         Chunk storedChunk = new Chunk(m_msg.getFileId(), m_msg.getChunkNo(), m_msg.getReplicationDeg(), m_body);
 
         // Only save chunks that are not mine:
-        if (!m_peerAccess.isHomeChunk(storedChunk.getIdentifier()))
+        if (!m_peerAccess.isHomeChunk(storedChunk))
         {
             // If I'm not storing this chunk:
             if (!m_peerAccess.isStoredChunk(storedChunk))
@@ -54,6 +54,12 @@ public class StoreTask extends Task
                     Header header = new Header();
                     header.addMessage(message);
                     m_peerAccess.sendHeaderMC(header);
+                }
+
+                // TODO: do stuff if no space available
+                if (remainingSpace <= 0)
+                {
+
                 }
             }
 

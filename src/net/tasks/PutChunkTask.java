@@ -43,8 +43,8 @@ public class PutChunkTask extends Task
 
                 Thread.sleep(delayTime);
 
-                // Backup success: TODO isto vai ter ser mudado para ser um PutChunk genérico => pode ser nos storedChunks
-                if (m_peerAccess.getRealReplicationDeg(m_chunk.getIdentifier()) >= m_chunk.getOptimalReplicationDeg().getValue())
+                // Backup success:
+                if (m_peerAccess.getRealReplicationDeg(m_chunk) >= m_chunk.getOptimalReplicationDeg().getValue())
                 {
                     setReturn(SENT);
                     return;

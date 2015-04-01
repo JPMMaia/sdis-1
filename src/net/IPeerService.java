@@ -11,7 +11,8 @@ import java.security.InvalidParameterException;
 public interface IPeerService extends Remote
 {
     void backupFile(String filename, int replicationDeg) throws IOException, InvalidParameterException;
-    void restoreFile(String filename) throws RemoteException;
+    void printBackupFiles() throws RemoteException;
+    void restoreFile(int fileIndex) throws RemoteException;
     void deleteFile(String filename) throws RemoteException;
     void setMaxDiskSpace(int bytes) throws RemoteException;
 }

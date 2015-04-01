@@ -11,15 +11,9 @@ import net.tasks.PutChunkTask;
  */
 public class BackupService extends UserService
 {
-    BackupFile m_file;
-    IPeerDataChange m_peerAccess;
-
-    public BackupService(String filename, int replicationDeg, IPeerDataChange peerAccess)
+    public BackupService(BackupFile file, IPeerDataChange peerAccess)
     {
-        ReplicationDeg replicationDegField = new ReplicationDeg(replicationDeg);
-
-        m_file = new BackupFile(filename, replicationDegField);
-        m_peerAccess = peerAccess;
+        super(file, peerAccess);
     }
 
     @Override
@@ -31,8 +25,8 @@ public class BackupService extends UserService
         {
             Chunk chunk = chunks[chunkNo];
 
-            // Add chunk to MY chunk list:
-            m_peerAccess.addHomeChunk(chunk.getIdentifier());
+            // Add chunk to MY chunk list: TODO: apagar o data destes chunks?
+            m_peerAccess.addHomeChunk(chunk);
 
             PutChunkTask putChunk = new PutChunkTask(chunk, m_peerAccess);
             Thread putChunkThread = new Thread(putChunk);
@@ -49,7 +43,7 @@ public class BackupService extends UserService
 
             if (putChunk.getReturn() != PutChunkTask.SENT)
             {
-                System.err.println("A chunk was not sucessfully sent after 5 times, aborting backup!");
+                System.err.println("A chunk was not successfully sent after 5 times, aborting backup!");
                 // TODO: aqui tenho de remover todos os chunks daquele file
                 return;
             }

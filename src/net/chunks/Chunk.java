@@ -42,7 +42,7 @@ public class Chunk
 
     public String getIdentifier()
     {
-        return "" + m_fileId + m_chunkNo;
+        return "" + m_fileId + "." + m_chunkNo;
     }
 
     public ReplicationDeg getOptimalReplicationDeg()

@@ -3,6 +3,7 @@ package net;
 import net.chunks.BackupFile;
 import net.chunks.Chunk;
 import net.chunks.FileId;
+import net.chunks.ReplicationDeg;
 import net.messages.Header;
 import net.messages.Message;
 import net.messages.PutChunkMessage;
@@ -47,7 +48,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private long m_totalStorage = 5000000; // (bytes)
     private long m_freeStorage = m_totalStorage;
     private List<BackupFile> m_homeFiles = new ArrayList<>();
-    private ConcurrentHashMap<String, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // Arraylist of IP Addresses for each Chunk
+    private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // Arraylist of IP Addresses for each Chunk
     private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>();
 
     private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
@@ -81,9 +82,23 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         System.out.println("Peer::backupFile: filename -> " + filename + "; replicationDeg -> " + replicationDeg);
 
-        UserService backup = new BackupService(filename, replicationDeg, this);
+        BackupFile file = new BackupFile(filename, new ReplicationDeg(replicationDeg));
+
+        // Check if the service is concurrent:
+        if (m_activeServices.containsKey(file.getFileId()))
+        {
+            System.out.println("Peer => An action regarding that file is already executing, please wait!");
+            return;
+        }
+
+        UserService backup = new BackupService(file, this);
         Thread thread = new Thread(backup);
         thread.start();
+
+        // Add to the active services list:
+        m_activeServices.put(file.getFileId(), backup);
+
+        // DEBUG TODO: REMOVER!
         try
         {
             thread.join();
@@ -101,19 +116,34 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void restoreFile(String filename) throws RemoteException
+    synchronized public void printBackupFiles()
+    {
+        System.out.println("Index - Filename - Last Modified");
+
+        for(int i=0; i < m_homeFiles.size(); i++)
+        {
+            System.out.println(i + ". - "
+                    + m_homeFiles.get(i).getFilename()
+                    + m_homeFiles.get(i).getLastModified());
+        }
+
+        System.out.println("\n");
+    }
+
+    @Override
+    synchronized public void restoreFile(int fileIndex)
+    {
+
+    }
+
+    @Override
+    synchronized public void deleteFile(String filename)
     {
         // TODO
     }
 
     @Override
-    synchronized public void deleteFile(String filename) throws RemoteException
-    {
-        // TODO
-    }
-
-    @Override
-    synchronized public void setMaxDiskSpace(int bytes) throws RemoteException
+    synchronized public void setMaxDiskSpace(int bytes)
     {
         // TODO
     }
@@ -133,6 +163,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                     // TODO
                     // Received PutChunk => If I'm the owner I don't save
                     case PutChunkMessage.s_TYPE:
+                        if (receivedHeader.getBody() == null)
+                            throw new InvalidParameterException("PutChunkMessage must have body!");
+
                         new Thread(new StoreTask((PutChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this)).start();
                         break;
 
@@ -141,23 +174,23 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         break;
 
 
-                /*
-                case "GETCHUNK":
-                    new GetChunkTask((GetChunkMessage) receivedMessage, peerAddress, this);
-                    break;
+                    /*
+                    case "GETCHUNK":
+                        new GetChunkTask((GetChunkMessage) receivedMessage, peerAddress, this);
+                        break;
 
-                case "CHUNK":
-                    new ChunkTask((ChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this);
-                    break;
+                    case "CHUNK":
+                        new ChunkTask((ChunkMessage) receivedMessage, receivedHeader.getBody(), peerAddress, this);
+                        break;
 
-                case "DELETE":
-                    new DeleteTask((DeleteMessage) receivedMessage, peerAddress, this);
-                    break;
+                    case "DELETE":
+                        new DeleteTask((DeleteMessage) receivedMessage, peerAddress, this);
+                        break;
 
-                case "REMOVE":
-                    new RemoveTask((RemovedMessage) receivedMessage, peerAddress, this);
-                    break;
-                */
+                    case "REMOVE":
+                        new RemoveTask((RemovedMessage) receivedMessage, peerAddress, this);
+                        break;
+                    */
 
                     default:
                         System.out.println("Unknown message received: " + receivedMessage.getType());
@@ -165,10 +198,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 }
             }
         }
-        catch(InvalidParameterException e)
+        catch(Exception e)
         {
-            System.err.println("Peer::onDataReceived: Ignoring invalid header!");
-            return;
+            System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e.getMessage());
         }
     }
 
@@ -178,7 +210,15 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if(args.length != 6)
         {
             System.err.println("Peer::main: Number of arguments must be 6!");
-            return;
+            System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889");
+
+            args = new String[6];
+            args[0] = "239.1.0.1";
+            args[1] = "8887";
+            args[2] = "239.1.0.2";
+            args[3] = "8888";
+            args[4] = "239.1.0.3";
+            args[5] = "8889";
         }
 
         String mcAddress = args[0];
@@ -200,6 +240,12 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         registry.rebind(Peer.class.getName(), peerService);
 
         System.out.println("Peer::main: Ready!");
+    }
+
+    @Override
+    public synchronized void removeUserService(UserService service)
+    {
+        m_activeServices.remove(service.getFileId());
     }
 
     @Override
@@ -239,7 +285,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void addHomeChunk(String identifier)
+    synchronized public void addHomeChunk(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
             m_homeChunks.put(identifier, new HashSet<>());
@@ -256,7 +302,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void addHomeChunkIP(String identifier, String address)
+    synchronized public void addHomeChunkIP(Chunk identifier, String address)
     {
         if (!m_homeChunks.containsKey(identifier))
             System.out.println("DEBUG: The home chunk you're trying to add IP doesn't exist!");
@@ -280,16 +326,24 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public int getRealReplicationDeg(String identifier)
+    synchronized public int getRealReplicationDeg(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
-            return 0;
+        {
+            if (!m_storedChunks.containsKey(identifier))
+            {
+                System.out.println("DEBUG: ReplicationDegree not found in homeChunks or storedChunks, assumed 0");
+                return 0;
+            }
+            else
+                return m_storedChunks.get(identifier).size();
+        }
         else
             return m_homeChunks.get(identifier).size();
     }
 
     @Override
-    synchronized public boolean isHomeChunk(String identifier)
+    synchronized public boolean isHomeChunk(Chunk identifier)
     {
         return m_homeChunks.containsKey(identifier);
     }
@@ -299,14 +353,4 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         return m_storedChunks.containsKey(chunk);
     }
-
-    /* private static byte[] concatenateByteArrays(byte[] array1, byte[] array2)
-    {
-        byte[] output = new byte[array1.length + array2.length];
-
-        System.arraycopy(array1, 0, output, 0, array1.length);
-        System.arraycopy(array2, 0, output, array1.length, array2.length);
-
-        return output;
-    } */
 }

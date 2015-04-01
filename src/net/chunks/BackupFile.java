@@ -3,6 +3,7 @@ package net.chunks;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 /**
  * Created by Miguel on 23-03-2015.
@@ -13,6 +14,7 @@ public class BackupFile
     private long m_fileSize;
     private int m_numberOfChunks;
     private String m_filename;
+    private String m_lastModified;
     private ReplicationDeg m_replicationDegree;
     private FileId m_fileId;
 
@@ -27,8 +29,10 @@ public class BackupFile
             File file = new File(filename);
             fileStream = new FileInputStream(file);
 
-            // Get file length in bytes:
+            // Get file info (length/last modified):
             m_fileSize = file.length();
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            m_lastModified = sdf.format(file.lastModified());
 
             // Read file for identifier:
             byte[] fileData = new byte[(int) m_fileSize];
@@ -52,7 +56,7 @@ public class BackupFile
     public Chunk[] divideInChunks()
     {
         // Get number of chunks + last chunk size:
-        int m_numberOfChunks = (int) (m_fileSize / (float)s_MAX_CHUNK_SIZE) + 1; // floor + 1 (last chunk)
+        m_numberOfChunks = (int) (m_fileSize / (float)s_MAX_CHUNK_SIZE) + 1; // floor + 1 (last chunk)
         int lastChunkSize = (int) m_fileSize % s_MAX_CHUNK_SIZE;
         Chunk[] fileChunks = new Chunk[m_numberOfChunks];
 
@@ -116,8 +120,13 @@ public class BackupFile
         return m_fileId;
     }
 
-    public static void main(String[] args)
+    public int getNumberChunks()
     {
-        new BackupFile("C:\\Users\\Miguel\\IdeaProjects\\gosto2.txt", new ReplicationDeg(3)).divideInChunks();
+        return m_numberOfChunks;
+    }
+
+    public String getLastModified()
+    {
+        return m_lastModified;
     }
 }
