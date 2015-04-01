@@ -7,6 +7,7 @@ import net.multicast.MCMulticastChannel;
 import net.multicast.MDBMulticastChannel;
 import net.multicast.MDRMulticastChannel;
 import net.services.BackupService;
+import net.services.RestoreService;
 import net.services.UserService;
 import net.tasks.ProcessGetChunkTask;
 import net.tasks.StoreTask;
@@ -18,9 +19,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -76,58 +75,123 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void backupFile(String filename, int replicationDeg) throws InvalidParameterException, IOException
+    synchronized public String backupFile(String filename, int replicationDeg)
     {
-        System.out.println("Peer::backupFile: filename -> " + filename + "; replicationDeg -> " + replicationDeg);
-
-        BackupFile file = new BackupFile(filename, new ReplicationDeg(replicationDeg));
-
-        // Check if the service is concurrent:
-        if (m_activeServices.containsKey(file.getFileId()))
+        try
         {
-            System.out.println("Peer => An action regarding that file is already executing, please wait!");
-            return;
+            BackupFile file = new BackupFile(filename, new ReplicationDeg(replicationDeg));
+
+            // Check if the service is concurrent:
+            if (m_activeServices.containsKey(file.getFileId()))
+                return "Peer::backupFile An action regarding that file is already executing, please wait!";
+
+            UserService backup = new BackupService(file, this);
+            Thread thread = new Thread(backup);
+            thread.start();
+
+            // Add to the active services list:
+            m_activeServices.put(file.getFileId(), backup);
+
+            return "Peer::backupFile Your backup request was registered! Please come again :)";
         }
-
-        UserService backup = new BackupService(file, this);
-        Thread thread = new Thread(backup);
-        thread.start();
-
-        // Add to the active services list:
-        m_activeServices.put(file.getFileId(), backup);
+        catch(Exception e)
+        {
+            return "Peer::backupFile A problem happened: " + e;
+        }
     }
 
     @Override
-    synchronized public void printBackupFiles()
+    synchronized public String printBackupFiles()
     {
-        System.out.println("Index - Filename - Last Modified");
+        StringBuilder builder = new StringBuilder();
+        builder.append("Index - Filename - Last Modified\n\n");
 
         for(int i=0; i < m_homeFiles.size(); i++)
+            builder.append(i).append(". - ")
+                    .append(m_homeFiles.get(i).getFilePath()).append(" - ")
+                    .append(m_homeFiles.get(i).getLastModified()).append("\n");
+
+        builder.append("\n");
+
+        return builder.toString();
+    }
+
+    @Override
+    synchronized public String restoreFile(int fileIndex)
+    {
+        try
         {
-            System.out.println(i + ". - "
-                    + m_homeFiles.get(i).getFilePath()
-                    + m_homeFiles.get(i).getLastModified());
+            if (fileIndex >= m_homeFiles.size())
+                return "Peer::restoreFile invalid file index";
+
+            BackupFile file = m_homeFiles.get(fileIndex);
+
+            // Check if the service is concurrent:
+            if (m_activeServices.containsKey(file.getFileId()))
+            {
+                return "Peer::restoreFile An action regarding that file is already executing, please wait!";
+            }
+
+            UserService restore = new RestoreService(file, this);
+            Thread thread = new Thread(restore);
+            thread.start();
+
+            // Add to the active services list:
+            m_activeServices.put(file.getFileId(), restore);
+
+            return "Peer::restoreFile Your restore request was registered! Please come again :)";
         }
-
-        System.out.println("\n");
+        catch(Exception e)
+        {
+            return "Peer::restoreFile A problem happened: " + e;
+        }
     }
 
     @Override
-    synchronized public void restoreFile(int fileIndex)
+    synchronized public String deleteFile(int fileIndex)
     {
+        try
+        {
+            if (fileIndex >= m_homeFiles.size())
+                return "Peer::restoreFile invalid file index";
 
+            BackupFile file = m_homeFiles.get(fileIndex);
+
+            // Check if the service is concurrent:
+            if (m_activeServices.containsKey(file.getFileId()))
+                return "Peer::deleteFile An action regarding that file is already executing, please wait!";
+
+            return "Peer::deleteFile Your delete file request was registered! Please come again :)";
+        }
+        catch(Exception e)
+        {
+            return "Peer::deleteFile A problem happened: " + e;
+        }
     }
 
     @Override
-    synchronized public void deleteFile(String filename)
+    synchronized public String setMaxDiskSpace(int bytes)
     {
-        // TODO
+        try
+        {
+            return "Peer::setMaskDiskSpace Your set disc space request was registered! Please come again :)";
+        }
+        catch(Exception e)
+        {
+            return "Peer::setMaskDiskSpace A problem happened: " + e;
+        }
     }
 
     @Override
-    synchronized public void setMaxDiskSpace(int bytes)
+    synchronized public String info()
     {
-        // TODO
+        String s1 = "There are " + m_activeServices.size() + " active services.\n";
+        String s2 = "There are " + m_waitingMessageTasks.size() + " tasks waiting for msg.\n";
+        String s3 = "There are " + m_homeFiles.size() + " home files.\n";
+        String s4 = "Home chunks: " + m_homeChunks + "\n";
+        String s5 = "Stored (backup) chunks: " + m_storedChunks + "\n";
+
+        return s1 + s2 + s3 + s4 + s5;
     }
 
     @Override
@@ -216,7 +280,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
     }
 
-    private synchronized void distributeMessageServices(Message message, byte[] body)
+    synchronized private void distributeMessageServices(Message message, byte[] body)
     {
         for(FileId key: m_activeServices.keySet())
         {
@@ -225,7 +289,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
     }
 
-    private synchronized void distributeMessageTasks(Message message, byte[] body)
+    synchronized private void distributeMessageTasks(Message message, byte[] body)
     {
         for(Task task: m_waitingMessageTasks)
         {
@@ -234,15 +298,14 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
     }
 
-    private synchronized void deleteStoredChunks(FileId fileId)
+    synchronized private void deleteStoredChunks(FileId fileId)
     {
-        for(Chunk chunkKey: m_storedChunks.keySet())
+        // Remove all stored chunks that have the following fileId:
+        for (Iterator<Map.Entry<Chunk, HashSet<String>>> it = m_storedChunks.entrySet().iterator(); it.hasNext(); )
         {
-            if (chunkKey.getFileId().equals(fileId))
-            {
-                chunkKey.deleteFile();
-                m_storedChunks.remove(chunkKey);
-            }
+            Map.Entry<Chunk, HashSet<String>> entry = it.next();
+            if(entry.getKey().getFileId().equals(fileId))
+                it.remove();
         }
     }
 
@@ -285,19 +348,19 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void removeUserService(UserService service)
+    synchronized public void removeUserService(UserService service)
     {
         m_activeServices.remove(service.getFileId());
     }
 
     @Override
-    public synchronized void removeTask(Task service)
+    synchronized public void removeTask(Task service)
     {
         m_waitingMessageTasks.remove(service);
     }
 
     @Override
-    public synchronized void sendHeaderMDB(Header header)
+    synchronized public void sendHeaderMDB(Header header)
     {
         try
         { m_mdbChannel.sendHeader(header); }
@@ -306,7 +369,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void sendHeaderMDR(Header header)
+    synchronized public void sendHeaderMDR(Header header)
     {
         try
         { m_mdrChannel.sendHeader(header); }
@@ -315,7 +378,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void sendHeaderMC(Header header)
+    synchronized public void sendHeaderMC(Header header)
     {
         try
         { m_mcChannel.sendHeader(header); }
@@ -324,7 +387,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void addHomeFile(BackupFile file)
+    synchronized public void addHomeFile(BackupFile file)
     {
         if (!m_homeFiles.contains(file))
             m_homeFiles.add(file);
@@ -333,7 +396,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void addHomeChunk(Chunk identifier)
+    synchronized public void addHomeChunk(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
             m_homeChunks.put(identifier, new HashSet<>());
@@ -342,7 +405,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void addStoredChunk(Chunk chunk)
+    synchronized public void addStoredChunk(Chunk chunk)
     {
         HashSet<String> listIPs = new HashSet<>();
         listIPs.add("localhost");
@@ -353,7 +416,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void addHomeChunkIP(Chunk identifier, String address)
+    synchronized public void addHomeChunkIP(Chunk identifier, String address)
     {
         if (!m_homeChunks.containsKey(identifier))
             System.out.println("DEBUG: The home chunk you're trying to add IP doesn't exist!");
@@ -362,7 +425,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized void addStoredChunkIP(Chunk chunk, String address)
+    synchronized public void addStoredChunkIP(Chunk chunk, String address)
     {
         if (!m_storedChunks.containsKey(chunk))
             System.out.println("DEBUG: The stored chunk you're trying to add IP doesn't exist!");
@@ -371,13 +434,33 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized long getFreeSpace()
+    synchronized public void deleteHomeFile(FileId fileId)
+    {
+        // Remove all home files that have the following fileId:
+        ListIterator<BackupFile> iter = m_homeFiles.listIterator();
+        while(iter.hasNext())
+        {
+            if(iter.next().getFileId().equals(fileId))
+                iter.remove();
+        }
+
+        // Remove all home chunks that have the following fileId:
+        for (Iterator<Map.Entry<Chunk, HashSet<String>>> it = m_homeChunks.entrySet().iterator(); it.hasNext(); )
+        {
+            Map.Entry<Chunk, HashSet<String>> entry = it.next();
+            if(entry.getKey().getFileId().equals(fileId))
+                it.remove();
+        }
+    }
+
+    @Override
+    synchronized public long getFreeSpace()
     {
         return m_freeStorage;
     }
 
     @Override
-    public synchronized int getRealReplicationDeg(Chunk identifier)
+    synchronized public int getRealReplicationDeg(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
         {
@@ -394,19 +477,19 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public synchronized boolean isHomeChunk(Chunk identifier)
+    synchronized public boolean isHomeChunk(Chunk identifier)
     {
         return m_homeChunks.containsKey(identifier);
     }
 
     @Override
-    public synchronized boolean isStoredChunk(Chunk chunk)
+    synchronized public boolean isStoredChunk(Chunk chunk)
     {
         return m_storedChunks.containsKey(chunk);
     }
 
     @Override
-    public synchronized Chunk getStoredChunk(FileId fileId, ChunkNo chunkNo)
+    synchronized public Chunk getStoredChunk(FileId fileId, ChunkNo chunkNo)
     {
         Chunk keyChunk = new Chunk(fileId, chunkNo);
 

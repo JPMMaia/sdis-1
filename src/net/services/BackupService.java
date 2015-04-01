@@ -42,8 +42,11 @@ public class BackupService extends UserService
 
             if (putChunk.getReturn() != PutChunkTask.SENT)
             {
-                System.err.println("A chunk was not successfully sent after 5 times, aborting backup!");
-                // TODO: aqui tenho de remover todos os chunks daquele file
+                System.err.println("BackupService::run A chunk was not successfully sent after 5 times, aborting backup!");
+                m_peerAccess.deleteHomeFile(chunk.getFileId());
+
+                // End service:
+                m_peerAccess.removeUserService(this);
                 return;
             }
         }

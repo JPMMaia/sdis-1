@@ -26,6 +26,8 @@ public interface IPeerDataChange
     void addHomeChunkIP(Chunk identifier, String address);
     void addStoredChunkIP(Chunk chunk, String address);
 
+    void deleteHomeFile(FileId fileId);
+
     boolean isHomeChunk(Chunk identifier);
     boolean isStoredChunk(Chunk chunk);
 

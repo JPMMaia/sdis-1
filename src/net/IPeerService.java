@@ -10,9 +10,10 @@ import java.security.InvalidParameterException;
  */
 public interface IPeerService extends Remote
 {
-    void backupFile(String filename, int replicationDeg) throws IOException, InvalidParameterException;
-    void printBackupFiles() throws RemoteException;
-    void restoreFile(int fileIndex) throws RemoteException;
-    void deleteFile(String filename) throws RemoteException;
-    void setMaxDiskSpace(int bytes) throws RemoteException;
+    String backupFile(String filename, int replicationDeg) throws RemoteException;
+    String printBackupFiles() throws RemoteException;
+    String restoreFile(int fileIndex) throws RemoteException;
+    String deleteFile(int fileIndex) throws RemoteException;
+    String setMaxDiskSpace(int bytes) throws RemoteException;
+    String info() throws RemoteException;
 }
