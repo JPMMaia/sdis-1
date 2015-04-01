@@ -31,6 +31,15 @@ public class ChunkNo
         return String.valueOf(m_value);
     }
 
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!(obj instanceof ChunkNo))
+            return false;
+        else
+            return this.m_value == ((ChunkNo) obj).m_value;
+    }
+
     public int getValue()
     {
         return m_value;

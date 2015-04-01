@@ -2,13 +2,14 @@ package net.chunks;
 
 import net.messages.Header;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 
 /**
  * Created by Miguel on 23-03-2015.
  */
 public class Chunk
 {
+    private static final String s_CHUNK_DIRECTORY = "chunks/";
     private FileId m_fileId;
     private ChunkNo m_chunkNo;
     private ReplicationDeg m_optimalReplicationDegree;
@@ -45,9 +46,51 @@ public class Chunk
         return "" + m_fileId + "." + m_chunkNo;
     }
 
+    public void storeFile()
+    {
+        if (m_data == null)
+        {
+            System.err.println("Chunk::storeFile data[] is null, cannot storeFile chunk!");
+            return;
+        }
+
+        try
+        {
+            File chunkStore = new File(s_CHUNK_DIRECTORY + getIdentifier());
+            FileOutputStream fileStream = new FileOutputStream(chunkStore);
+
+            fileStream.write(m_data);
+
+            fileStream.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            System.err.println("Chunk::storeFile: Folder chunks not found");
+            System.exit(-1);
+        }
+        catch (IOException e)
+        {
+            System.err.println("Chunk::storeFile: Error writing in storeFile chunk");
+            System.exit(-1);
+        }
+    }
+
+    public void deleteFile()
+    {
+        File file = new File(s_CHUNK_DIRECTORY + getIdentifier());
+
+        if (!file.delete())
+            System.err.println("Chunk::deleteFile - Error deleting file");
+    }
+
     public ReplicationDeg getOptimalReplicationDeg()
     {
         return m_optimalReplicationDegree;
+    }
+
+    public void setData(byte[] data)
+    {
+        m_data = data;
     }
 
     public byte[] getData()

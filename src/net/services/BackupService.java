@@ -1,9 +1,8 @@
 package net.services;
 
 import net.IPeerDataChange;
-import net.chunks.Chunk;
-import net.chunks.ReplicationDeg;
 import net.chunks.BackupFile;
+import net.chunks.Chunk;
 import net.tasks.PutChunkTask;
 
 /**
@@ -51,5 +50,8 @@ public class BackupService extends UserService
 
         // Store file in the list:
         m_peerAccess.addHomeFile(m_file);
+
+        // End service:
+        m_peerAccess.removeUserService(this);
     }
 }

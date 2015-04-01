@@ -1,6 +1,7 @@
 package net.tasks;
 
 import net.IPeerDataChange;
+import net.messages.Message;
 
 /**
  * Created by Miguel on 30-03-2015.
@@ -23,5 +24,10 @@ public abstract class Task implements Runnable
     protected void setReturn(int value)
     {
         m_returnValue = value;
+    }
+
+    public boolean wantsMessage(Message message, byte[] body)
+    {
+        return false;
     }
 }

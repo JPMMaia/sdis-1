@@ -1,8 +1,6 @@
 package net.chunks;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 
 /**
@@ -11,25 +9,28 @@ import java.text.SimpleDateFormat;
 public class BackupFile
 {
     private static final int s_MAX_CHUNK_SIZE = 64000;
+    private static final String s_RECOVER_DIRECTORY = "recover/";
     private long m_fileSize;
     private int m_numberOfChunks;
-    private String m_filename;
+    private String m_filePath;
+    private String m_fileName;
     private String m_lastModified;
     private ReplicationDeg m_replicationDegree;
     private FileId m_fileId;
 
-    public BackupFile(String filename, ReplicationDeg replication)
+    public BackupFile(String filePath, ReplicationDeg replication)
     {
-        m_filename = filename;
+        m_filePath = filePath;
         m_replicationDegree = replication;
         FileInputStream fileStream = null;
 
         try
         {
-            File file = new File(filename);
+            File file = new File(filePath);
             fileStream = new FileInputStream(file);
 
             // Get file info (length/last modified):
+            m_fileName = file.getName();
             m_fileSize = file.length();
             SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
             m_lastModified = sdf.format(file.lastModified());
@@ -62,7 +63,7 @@ public class BackupFile
 
         try
         {
-            FileInputStream fileStream = new FileInputStream(new File(m_filename));
+            FileInputStream fileStream = new FileInputStream(new File(m_filePath));
 
             // Fill all the chunks:
             fillChunks(fileStream, fileChunks, lastChunkSize);
@@ -74,6 +75,36 @@ public class BackupFile
         }
 
         return fileChunks;
+    }
+
+    public void recoverFromChunks(Chunk[] chunksArray)
+    {
+        if (chunksArray.length != m_numberOfChunks)
+        {
+            System.err.println("BackupFile::recover: Recover not possible, different chunk number!");
+            return;
+        }
+
+        try
+        {
+            File recoverFile = new File(s_RECOVER_DIRECTORY + m_fileName);
+            FileOutputStream recoverStream = new FileOutputStream(recoverFile);
+
+            for (Chunk chunk: chunksArray)
+                recoverStream.write(chunk.getData());
+
+            recoverStream.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            System.err.println("BackupFile::recoverFromChunks: Folder recover not found");
+            System.exit(-1);
+        }
+        catch (IOException e)
+        {
+            System.err.println("BackupFile::recoverFromChunks: Error writing in recover file");
+            System.exit(-1);
+        }
     }
 
     private void fillChunks(FileInputStream fileStream, Chunk[] fileChunks, int lastChunkSize) throws IOException
@@ -110,9 +141,9 @@ public class BackupFile
         }
     }
 
-    public String getFilename()
+    public String getFilePath()
     {
-        return m_filename;
+        return m_filePath;
     }
 
     public FileId getFileId()
