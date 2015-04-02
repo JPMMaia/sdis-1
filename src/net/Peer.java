@@ -508,7 +508,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public int getRealReplicationDeg(Chunk identifier)
+    synchronized public int getStoredMessagesReceived(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
         {
@@ -549,11 +549,5 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         System.out.println("Peer::getStoredChunk - No chunk was found!");
         return null;
-    }
-
-    @Override
-    public int getStoredMessagesReceived(Chunk chunk)
-    {
-        return m_storedChunks.get(chunk).size();
     }
 }

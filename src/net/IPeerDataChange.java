@@ -35,5 +35,4 @@ public interface IPeerDataChange
     int getStoredMessagesReceived(Chunk chunk);
 
     long getFreeSpace();
-    int getRealReplicationDeg(Chunk identifier);
 }
