@@ -59,7 +59,7 @@ public class StoreTask extends Task
                 // TODO: do stuff if no space available
                 if (remainingSpace <= 0)
                 {
-
+                    // Apagar todos os chunks c/ replicação maior que necessário
                 }
             }
 

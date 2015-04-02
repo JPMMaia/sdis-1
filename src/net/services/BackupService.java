@@ -37,7 +37,9 @@ public class BackupService extends UserService
             }
             catch (InterruptedException e)
             {
+                System.err.println("Error waiting for putchunk thread");
                 e.printStackTrace();
+                System.exit(-3);
             }
 
             if (putChunk.getReturn() != PutChunkTask.SENT)

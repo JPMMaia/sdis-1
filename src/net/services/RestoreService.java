@@ -31,7 +31,8 @@ public class RestoreService extends UserService
         // If the message brings the chunk I want, fill the body and add him to the list
         if (m_currentChunk != null
                 && message.getType().equals(ChunkMessage.s_TYPE)
-                && ((ChunkMessage) message).getChunkNo().getValue() == m_currentChunk.getChunkNo().getValue())
+                && message.getFileId().equals(m_currentChunk.getFileId())
+                && ((ChunkMessage) message).getChunkNo().equals(m_currentChunk.getChunkNo()))
         {
             m_currentChunk.setData(body);
             m_chunkList.add(m_currentChunk);

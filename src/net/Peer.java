@@ -183,6 +183,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         try
         {
+            // é preciso ordenar os cenas e ver quais os chunks a retirar (critério, rep. degree maior que o necessário, mas pode ocorrer remover um q tenha replication degree <= desejado)
+            // para os chunks a tirar, é preciso enviar "remove" e tirar dos m_storedChunks
+
+
             return "Peer::setMaskDiskSpace Your set disc space request was registered! Please come again :)";
         }
         catch(Exception e)
@@ -269,11 +273,15 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
 
                     case DeleteMessage.s_TYPE:
+                    {
                         deleteStoredChunks(receivedMsg.getFileId());
+                    }
                         break;
 
                     case RemovedMessage.s_TYPE:
+                    {
                         //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
+                    }
                         break;
 
                     default:
