@@ -170,7 +170,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             header.addMessage(message);
             sendHeaderMC(header);
 
-            return "Peer::deleteFile Your deleteFile file request was registered! Please come again :)";
+            return "Peer::deleteFile Your delete file request was registered! Please come again :)";
         }
         catch(Exception e)
         {

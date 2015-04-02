@@ -17,7 +17,7 @@ public class StoreTask extends Task
 {
     private PutChunkMessage m_msg;
     private byte[] m_body;
-    String m_peerAddress;
+    private String m_peerAddress;
 
     public StoreTask(PutChunkMessage message, byte[] body, String peerAddress, IPeerDataChange peer)
     {
