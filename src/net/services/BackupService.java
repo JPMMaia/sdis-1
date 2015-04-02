@@ -56,6 +56,8 @@ public class BackupService extends UserService
         // Store file in the list:
         m_peerAccess.addHomeFile(m_file);
 
+        System.out.println("BackupService - A backup ended successfuly!");
+
         // End service:
         m_peerAccess.removeUserService(this);
     }

@@ -68,6 +68,8 @@ public class RestoreService extends UserService
         // Recover file:
         m_file.recoverFromChunks(m_chunkList);
 
+        System.out.println("RecoverService - A backup ended successfuly!");
+
         // End service:
         m_peerAccess.removeUserService(this);
     }
