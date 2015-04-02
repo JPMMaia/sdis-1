@@ -63,9 +63,15 @@ public class StoreTask extends Task
                 }
             }
 
-            // If I'm already storing this chunk: ignore it
+            // If I'm already storing this chunk: send stored again
+            else
+            {
+                StoredMessage message = new StoredMessage(new Version('1', '0'), storedChunk.getFileId(), storedChunk.getChunkNo());
+                Header header = new Header();
+                header.addMessage(message);
+                m_peerAccess.sendHeaderMC(header);
+            }
         }
-
         // If it's MY chunk from one of my files: ignore it
     }
 }

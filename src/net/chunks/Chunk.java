@@ -22,7 +22,7 @@ public class Chunk
         m_optimalReplicationDegree = replicationOptimal;
         m_data = data;
 
-        System.out.println("Chunk::constructor: fileId -> " + m_fileId +  "; length -> " + data.length + "; data -> " + new String(data, Header.s_STANDARD_CHARSET));
+        // System.out.println("Chunk::constructor: fileId -> " + m_fileId +  "; length -> " + data.length + "; data -> " + new String(data, Header.s_STANDARD_CHARSET));
     }
 
     public Chunk(FileId fileId, ChunkNo chunkNo)

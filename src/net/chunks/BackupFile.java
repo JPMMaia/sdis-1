@@ -2,6 +2,7 @@ package net.chunks;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 /**
  * Created by Miguel on 23-03-2015.
@@ -77,9 +78,9 @@ public class BackupFile
         return fileChunks;
     }
 
-    public void recoverFromChunks(Chunk[] chunksArray)
+    public void recoverFromChunks(ArrayList<Chunk> chunksArray)
     {
-        if (chunksArray.length != m_numberOfChunks)
+        if (chunksArray.size() != m_numberOfChunks)
         {
             System.err.println("BackupFile::recover: Recover not possible, different chunk number!");
             return;

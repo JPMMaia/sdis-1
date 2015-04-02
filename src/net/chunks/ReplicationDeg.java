@@ -39,7 +39,7 @@ public class ReplicationDeg
 
     private static void throwIfInvalid(int value) throws InvalidParameterException
     {
-        if(value < 0 || value > 9)
+        if(value < 1 || value > 9)
             throw new InvalidParameterException("ReplicationDeg::constructor: value must be between 0 and 9!");
     }
 }

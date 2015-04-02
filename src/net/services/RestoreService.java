@@ -66,7 +66,7 @@ public class RestoreService extends UserService
         }
 
         // Recover file:
-        m_file.recoverFromChunks((Chunk[]) m_chunkList.toArray());
+        m_file.recoverFromChunks(m_chunkList);
 
         // End service:
         m_peerAccess.removeUserService(this);

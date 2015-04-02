@@ -20,7 +20,7 @@ public class DeleteMessage extends Message
     @Override
     public String toString()
     {
-        return "DELETE " + m_version + " " + m_fileId;
+        return s_TYPE + " " + m_version + " " + m_fileId;
     }
 
     @Override

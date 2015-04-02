@@ -28,7 +28,7 @@ public class PutChunkMessage extends Message
     @Override
     public String toString()
     {
-        return "PUTCHUNK " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg;
+        return s_TYPE + " " + m_version + " " + m_fileId + " " + m_chunkNo + " " + m_replicationDeg;
     }
 
     public ChunkNo getChunkNo()

@@ -25,7 +25,7 @@ public class StoredMessage extends Message
     @Override
     public String toString()
     {
-        return "STORED " + m_version + " " + m_fileId + " " + m_chunkNo;
+        return s_TYPE + " " + m_version + " " + m_fileId + " " + m_chunkNo;
     }
 
     public ChunkNo getChunkNo()

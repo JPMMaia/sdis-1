@@ -96,7 +96,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
         catch(Exception e)
         {
-            return "Peer::backupFile A problem happened: " + e;
+            return "Peer::backupFile A problem happened: " + e.getMessage();
         }
     }
 
@@ -143,7 +143,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
         catch(Exception e)
         {
-            return "Peer::restoreFile A problem happened: " + e;
+            return "Peer::restoreFile A problem happened: " + e.getMessage();
         }
     }
 
@@ -174,7 +174,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
         catch(Exception e)
         {
-            return "Peer::deleteFile A problem happened: " + e;
+            return "Peer::deleteFile A problem happened: " + e.getMessage();
         }
     }
 
@@ -187,7 +187,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
         catch(Exception e)
         {
-            return "Peer::setMaskDiskSpace A problem happened: " + e;
+            return "Peer::setMaskDiskSpace A problem happened: " + e.getMessage();
         }
     }
 
@@ -209,6 +209,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         try
         {
             Header receivedHeader = new Header(data, length);
+
+            System.out.println("DEBUG: Received " + receivedHeader.getMessage(0).getType());
 
             // Ignore all headers with more than one message
             if (receivedHeader.getMessageNumber() == 1)
@@ -281,11 +283,13 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         break;
                 }
             }
-            System.err.println("Peer::onDataReceived Received header with more than 1 message, ignoring");
+
+            else
+                System.err.println("Peer::onDataReceived Received header with more than 1 message, ignoring");
         }
         catch(Exception e)
         {
-            System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e.getMessage());
+            System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e);
         }
     }
 

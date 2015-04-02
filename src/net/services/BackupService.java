@@ -45,6 +45,8 @@ public class BackupService extends UserService
                 System.err.println("BackupService::run A chunk was not successfully sent after 5 times, aborting backup!");
                 m_peerAccess.deleteHomeFile(chunk.getFileId());
 
+                // TODO: mandar um delete para apagar o que ficou nos outros?!
+
                 // End service:
                 m_peerAccess.removeUserService(this);
                 return;

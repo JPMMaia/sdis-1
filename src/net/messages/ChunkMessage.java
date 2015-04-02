@@ -26,7 +26,7 @@ public class ChunkMessage extends Message
     @Override
     public String toString()
     {
-        return "Chunk " + m_version + " " + m_fileId + " " + m_chunkNo;
+        return s_TYPE + " " + m_version + " " + m_fileId + " " + m_chunkNo;
     }
 
     public ChunkNo getChunkNo()
