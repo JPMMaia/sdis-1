@@ -1,11 +1,11 @@
 package net;
 
+import net.Utils.IPFinder;
 import net.chunks.*;
 import net.messages.*;
 import net.multicast.IMulticastChannelListener;
-import net.multicast.MCMulticastChannel;
-import net.multicast.MDBMulticastChannel;
-import net.multicast.MDRMulticastChannel;
+import net.multicast.MulticastChannelReceive;
+import net.multicast.MulticastChannelSend;
 import net.services.BackupService;
 import net.services.RestoreService;
 import net.services.UserService;
@@ -32,10 +32,13 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     public static final String s_SERVICE_HOST = "localhost";
     public static final int s_SERVICE_PORT = 1099;
 
+    private static String s_MY_ADDRESS;
+
     // Multicast channels:
-    private MCMulticastChannel m_mcChannel;
-    private MDBMulticastChannel m_mdbChannel;
-    private MDRMulticastChannel m_mdrChannel;
+    private MulticastChannelReceive m_mcChannel;
+    private MulticastChannelReceive m_mdbChannel;
+    private MulticastChannelReceive m_mdrChannel;
+    private MulticastChannelSend m_sendSocket;
 
     private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
     private ArrayList<Task> m_waitingMessageTasks = new ArrayList<>();
@@ -52,14 +55,21 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
     public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
-        m_mcChannel = new MCMulticastChannel(mcAddress, mcPort);
+        m_mcChannel = new MulticastChannelReceive(mcAddress, mcPort);
         m_mcChannel.addListener(this);
 
-        m_mdbChannel = new MDBMulticastChannel(mdbAddress, mdbPort);
+        m_mdbChannel = new MulticastChannelReceive(mdbAddress, mdbPort);
         m_mdbChannel.addListener(this);
 
-        m_mdrChannel = new MDRMulticastChannel(mdrAddress, mdrPort);
+        m_mdrChannel = new MulticastChannelReceive(mdrAddress, mdrPort);
         m_mdrChannel.addListener(this);
+
+        m_sendSocket = new MulticastChannelSend();
+
+        // Define my IP Address:
+        s_MY_ADDRESS = IPFinder.getIP() + ":" + Integer.toString(m_sendSocket.getLocalPort());
+
+        System.out.println("Peer running at address: " + s_MY_ADDRESS);
     }
 
     synchronized public void run()
@@ -72,6 +82,51 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         Thread mdrThread = new Thread(m_mdrChannel);
         mdrThread.start();
+    }
+
+    public static void main(String[] args) throws IOException, AlreadyBoundException
+    {
+        // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889
+        if(args.length != 6)
+        {
+            System.err.println("Peer::main: Number of arguments must be 6!");
+            System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889");
+
+            args = new String[6];
+            args[0] = "239.1.0.1";
+            args[1] = "8887";
+            args[2] = "239.1.0.2";
+            args[3] = "8888";
+            args[4] = "239.1.0.3";
+            args[5] = "8889";
+        }
+
+        String mcAddress = args[0];
+        int mcPort = Integer.parseInt(args[1]);
+        String mdbAddress = args[2];
+        int mdbPort = Integer.parseInt(args[3]);
+        String mdrAddress = args[4];
+        int mdrPort = Integer.parseInt(args[5]);
+
+        // Create peer:
+        Peer peer = new Peer(mcAddress, mcPort, mdbAddress, mdbPort, mdrAddress, mdrPort);
+        peer.run();
+
+        try
+        {
+            // Create peer service remote object:
+            IPeerService peerService = (IPeerService) UnicastRemoteObject.exportObject(peer, Peer.s_SERVICE_PORT);
+
+            // Bind in the registry:
+            Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
+            registry.rebind(Peer.class.getName(), peerService);
+        }
+        catch(Exception e)
+        {
+            System.err.println("Peer::main: RMI is already running on another Peer!");
+        }
+
+        System.out.println("Peer::main: Ready!");
     }
 
     @Override
@@ -210,11 +265,23 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     @Override
     synchronized public void onDataReceived(byte[] data, int length, String peerAddress)
     {
+        // Ignore test messages:
+        if (new String(data).trim().equals("test"))
+        {
+            return;
+        }
+
+        // Ignore messages coming from this peer:
+        if (peerAddress.equals(s_MY_ADDRESS))
+        {
+            return;
+        }
+
         try
         {
             Header receivedHeader = new Header(data, length);
 
-            System.out.println("DEBUG: Received " + receivedHeader.getMessage(0).getType());
+            System.out.println("DEBUG: Received " + receivedHeader.getMessage(0).getType() + " from " + peerAddress);
 
             // Ignore all headers with more than one message
             if (receivedHeader.getMessageNumber() == 1)
@@ -331,44 +398,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
     }
 
-    public static void main(String[] args) throws IOException, AlreadyBoundException
-    {
-        // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889
-        if(args.length != 6)
-        {
-            System.err.println("Peer::main: Number of arguments must be 6!");
-            System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889");
-
-            args = new String[6];
-            args[0] = "239.1.0.1";
-            args[1] = "8887";
-            args[2] = "239.1.0.2";
-            args[3] = "8888";
-            args[4] = "239.1.0.3";
-            args[5] = "8889";
-        }
-
-        String mcAddress = args[0];
-        int mcPort = Integer.parseInt(args[1]);
-        String mdbAddress = args[2];
-        int mdbPort = Integer.parseInt(args[3]);
-        String mdrAddress = args[4];
-        int mdrPort = Integer.parseInt(args[5]);
-
-        // Create peer:
-        Peer peer = new Peer(mcAddress, mcPort, mdbAddress, mdbPort, mdrAddress, mdrPort);
-        peer.run();
-
-        // Create peer service remote object:
-        IPeerService peerService = (IPeerService) UnicastRemoteObject.exportObject(peer, Peer.s_SERVICE_PORT);
-
-        // Bind in the registry:
-        Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
-        registry.rebind(Peer.class.getName(), peerService);
-
-        System.out.println("Peer::main: Ready!");
-    }
-
     @Override
     synchronized public void removeUserService(UserService service)
     {
@@ -385,7 +414,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void sendHeaderMDB(Header header)
     {
         try
-        { m_mdbChannel.sendHeader(header); }
+        { m_sendSocket.sendHeader(header, m_mdbChannel.getAddress(), m_mdbChannel.getPort()); }
         catch (IOException e)
         { System.out.println("Oops, looks like sending to MDB went wrong!"); }
     }
@@ -394,7 +423,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void sendHeaderMDR(Header header)
     {
         try
-        { m_mdrChannel.sendHeader(header); }
+        { m_sendSocket.sendHeader(header, m_mdrChannel.getAddress(), m_mdrChannel.getPort()); }
         catch (IOException e)
         { System.out.println("Oops, looks like sending to MDR went wrong!"); }
     }
@@ -403,7 +432,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void sendHeaderMC(Header header)
     {
         try
-        { m_mcChannel.sendHeader(header); }
+        { m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort()); }
         catch (IOException e)
         { System.out.println("Oops, looks like sending to MC went wrong!"); }
     }
@@ -430,7 +459,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void addStoredChunk(Chunk chunk)
     {
         HashSet<String> listIPs = new HashSet<>();
-        listIPs.add("localhost");
+        listIPs.add(s_MY_ADDRESS);
         m_storedChunks.put(chunk, listIPs);
     }
 
