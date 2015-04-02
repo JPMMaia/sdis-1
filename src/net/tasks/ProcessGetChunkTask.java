@@ -28,7 +28,7 @@ public class ProcessGetChunkTask extends Task
     @Override
     public synchronized boolean wantsMessage(Message message, byte[] body)
     {
-        // Chunk response to the get chunk message:
+        // Chunk response to the get chunk message - check if we received a chunk message:
         if (message.getType().equals(ChunkMessage.s_TYPE)
             && message.getFileId().equals(m_msg.getFileId())
             && ((ChunkMessage) message).getChunkNo().equals(m_msg.getChunkNo()))

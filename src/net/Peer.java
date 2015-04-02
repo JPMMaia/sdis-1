@@ -272,11 +272,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         deleteStoredChunks(receivedMsg.getFileId());
                         break;
 
-                    /*
-                    case "REMOVE":
-                        new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
+                    case RemovedMessage.s_TYPE:
+                        //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
                         break;
-                    */
 
                     default:
                         System.err.println("Peer::onDataReceived Unknown message received: " + receivedMsg.getType());
