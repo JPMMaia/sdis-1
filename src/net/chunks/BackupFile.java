@@ -68,6 +68,8 @@ public class BackupFile
 
             // Fill all the chunks:
             fillChunks(fileStream, fileChunks, lastChunkSize);
+
+            fileStream.close();
         }
         catch (Exception e)
         {
@@ -117,12 +119,22 @@ public class BackupFile
         {
             if (i == fileChunks.length - 1) // last chunk:
             {
-                fileStream.read(lastChunkData);
+                if (fileStream.read(lastChunkData) != lastChunkSize)
+                {
+                    System.err.println("BackupFile::fillChunks: Error reading from file");
+                    System.exit(-1);
+                }
+
                 fileChunks[i] = new Chunk(m_fileId, new ChunkNo(i), m_replicationDegree, lastChunkData);
             }
             else // others:
             {
-                fileStream.read(chunkData);
+                if (fileStream.read(chunkData) != s_MAX_CHUNK_SIZE)
+                {
+                    System.err.println("BackupFile::fillChunks: Error reading from file");
+                    System.exit(-1);
+                }
+
                 fileChunks[i] = new Chunk(m_fileId, new ChunkNo(i), m_replicationDegree, chunkData);
             }
         }
