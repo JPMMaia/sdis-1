@@ -1,7 +1,5 @@
 package net.messages;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
@@ -15,7 +13,7 @@ public class Header
 {
     public static final String s_CRLF = "\r\n";
     public static final Charset s_STANDARD_CHARSET = StandardCharsets.US_ASCII;
-    private List<Message> m_messages = new ArrayList<>();
+    private List<IHeaderLine> m_messages = new ArrayList<>();
     private byte[] m_body = new byte[0];
 
     public Header()
@@ -62,7 +60,7 @@ public class Header
     {
         StringBuilder builder = new StringBuilder();
 
-        for (Message message : m_messages)
+        for (IHeaderLine message : m_messages)
         {
             builder.append(message);
             builder.append(Header.s_CRLF);
@@ -121,7 +119,7 @@ public class Header
         m_messages.remove(message);
     }
 
-    public Message getMessage(int index)
+    public IHeaderLine getMessage(int index)
     {
         return m_messages.get(index);
     }

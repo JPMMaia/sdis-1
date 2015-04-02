@@ -219,7 +219,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Ignore all headers with more than one message
             if (receivedHeader.getMessageNumber() == 1)
             {
-                Message receivedMsg = receivedHeader.getMessage(0);
+                Message receivedMsg = (Message) receivedHeader.getMessage(0);
                 switch(receivedMsg.getType())
                 {
                     // TODO
@@ -432,9 +432,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         HashSet<String> listIPs = new HashSet<>();
         listIPs.add("localhost");
         m_storedChunks.put(chunk, listIPs);
-
-        // Store the chunk physically in a file:
-        chunk.storeFile();
     }
 
     @Override
@@ -523,5 +520,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         System.out.println("Peer::getStoredChunk - No chunk was found!");
         return null;
+    }
+
+    @Override
+    public int getStoredMessagesReceived(Chunk chunk)
+    {
+        return m_storedChunks.get(chunk).size();
     }
 }

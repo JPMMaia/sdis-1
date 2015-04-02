@@ -32,6 +32,7 @@ public interface IPeerDataChange
     boolean isStoredChunk(Chunk chunk);
 
     Chunk getStoredChunk(FileId fileId, ChunkNo chunkNo);
+    int getStoredMessagesReceived(Chunk chunk);
 
     long getFreeSpace();
     int getRealReplicationDeg(Chunk identifier);

@@ -44,22 +44,31 @@ public class StoreTask extends Task
                 {
                     m_peerAccess.addStoredChunk(storedChunk);
 
+                    // Wait a random time between 0 and 400 ms:
                     try
                     { Thread.sleep(RandomNumber.getInt(0, 400)); }
                     catch (InterruptedException e)
                     { e.printStackTrace(); }
+
+                    // If the number of stored messages is already equals or greater than the desired replication degree:
+                    if(m_peerAccess.getStoredMessagesReceived(storedChunk) >= storedChunk.getOptimalReplicationDeg().getValue())
+                        return;
 
                     // Send Stored Message:
                     StoredMessage message = new StoredMessage(new Version('1','0'), storedChunk.getFileId(), storedChunk.getChunkNo());
                     Header header = new Header();
                     header.addMessage(message);
                     m_peerAccess.sendHeaderMC(header);
+
+                    // Store the chunk physically in a file:
+                    storedChunk.storeFile();
                 }
 
                 // TODO: do stuff if no space available
                 if (remainingSpace <= 0)
                 {
                     // Apagar todos os chunks c/ replicação maior que necessário
+
                 }
             }
 

@@ -3,12 +3,10 @@ package net.messages;
 import net.chunks.FileId;
 import net.chunks.Version;
 
-import java.nio.charset.StandardCharsets;
-
 /**
  * Created by Miguel on 23-03-2015.
  */
-public abstract class Message
+public abstract class Message implements IHeaderLine
 {
     protected Version m_version;
     protected FileId m_fileId;
@@ -17,14 +15,6 @@ public abstract class Message
     {
         m_version = version;
         m_fileId = fileId;
-    }
-
-    @Override
-    public abstract String toString();
-
-    public byte[] toBytes()
-    {
-        return toString().getBytes(StandardCharsets.US_ASCII);
     }
 
     public Version getVersion()
@@ -36,8 +26,6 @@ public abstract class Message
     {
         return m_fileId;
     }
-
-    public abstract String getType();
 
     public static String[] splitMessage(String message)
     {

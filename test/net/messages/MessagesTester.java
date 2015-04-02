@@ -79,7 +79,7 @@ public class MessagesTester
         Header header = new Header(data, data.length);
 
         // Check if message is a PUTCHUNK message:
-        Message message = header.getMessage(0);
+        Message message = (Message) header.getMessage(0);
         Assert.assertEquals(PutChunkMessage.s_TYPE, message.getType());
 
         // Test message:
