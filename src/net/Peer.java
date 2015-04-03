@@ -47,8 +47,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private long m_totalStorage = 5000000; // (bytes)
     private long m_freeStorage = m_totalStorage;
     private List<BackupFile> m_homeFiles = new ArrayList<>();
-    private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // Arraylist of IP Addresses for each Chunk
-    private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // IP Addresses for each Chunk (that I did backup)
+    private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>(); // IP Addresses for each external Chunk I stored
+    private ConcurrentHashMap<Chunk, HashSet<String>> m_tempStoredChunks = new ConcurrentHashMap<>(); // IP Addresses for each temporarily stored chunks
 
     // To restore:
     private ConcurrentHashMap<FileId, Chunk> m_receivedRecoverChunks = new ConcurrentHashMap<>();
@@ -309,6 +310,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                             addHomeChunkIP(chunkKey, peerAddress);
                         else if (isStoredChunk(chunkKey))
                             addStoredChunkIP(chunkKey, peerAddress);
+                        else if (isTemporarilyStoredChunk(chunkKey))
+                            addTemporarilyStoredChunkIP(chunkKey, peerAddress);
                     }
                         break;
 
@@ -456,11 +459,34 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void addStoredChunk(Chunk chunk)
+    synchronized public void addTemporarilyStoredChunk(Chunk chunk)
     {
-        HashSet<String> listIPs = new HashSet<>();
-        listIPs.add(s_MY_ADDRESS);
-        m_storedChunks.put(chunk, listIPs);
+        if (m_tempStoredChunks.containsKey(chunk))
+            System.out.println("DEBUG: TemporarilyStored list already has that chunk!");
+        else
+        {
+            HashSet<String> addresses = new HashSet<>();
+            m_tempStoredChunks.put(chunk, addresses);
+        }
+    }
+
+    @Override
+    synchronized public void deleteTemporarilyStoredChunk(Chunk chunk)
+    {
+        m_tempStoredChunks.remove(chunk);
+    }
+
+    @Override
+    synchronized public void moveTempChunkToStoredAndInc(Chunk chunk)
+    {
+        if (m_tempStoredChunks.containsKey(chunk))
+        {
+            HashSet<String> addresses = m_tempStoredChunks.get(chunk);
+            m_tempStoredChunks.remove(chunk);
+
+            addresses.add(s_MY_ADDRESS); // add my address!
+            m_storedChunks.put(chunk, addresses);
+        }
     }
 
     @Override
@@ -479,6 +505,15 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             System.out.println("DEBUG: The stored chunk you're trying to add IP doesn't exist!");
         else
             m_storedChunks.get(chunk).add(address);
+    }
+
+    @Override
+    synchronized public void addTemporarilyStoredChunkIP(Chunk chunk, String address)
+    {
+        if (!m_tempStoredChunks.containsKey(chunk))
+            System.out.println("DEBUG: The temporarily stored chunk you're trying to add IP doesn't exist!");
+        else
+            m_tempStoredChunks.get(chunk).add(address);
     }
 
     @Override
@@ -508,7 +543,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public int getStoredMessagesReceived(Chunk identifier)
+    synchronized public int getStoredMessagesReceivedHomeOrStored(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
         {
@@ -525,6 +560,18 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
+    synchronized public int getStoredMessagesReceivedTemporarily(Chunk identifier)
+    {
+        if (!m_tempStoredChunks.containsKey(identifier))
+        {
+            System.out.println("DEBUG: ReplicationDegree not found in temporarily stored, assumed 0");
+            return 0;
+        }
+        else
+            return m_tempStoredChunks.get(identifier).size();
+    }
+
+    @Override
     synchronized public boolean isHomeChunk(Chunk identifier)
     {
         return m_homeChunks.containsKey(identifier);
@@ -534,6 +581,12 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public boolean isStoredChunk(Chunk chunk)
     {
         return m_storedChunks.containsKey(chunk);
+    }
+
+    @Override
+    synchronized public boolean isTemporarilyStoredChunk(Chunk chunk)
+    {
+        return m_tempStoredChunks.containsKey(chunk);
     }
 
     @Override

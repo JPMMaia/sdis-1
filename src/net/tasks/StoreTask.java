@@ -35,50 +35,62 @@ public class StoreTask extends Task
         // Only save chunks that are not mine:
         if (!m_peerAccess.isHomeChunk(storedChunk))
         {
-            // If I'm not storing this chunk:
-            if (!m_peerAccess.isStoredChunk(storedChunk))
+            if (!m_peerAccess.isTemporarilyStoredChunk(storedChunk))
             {
-                // Only if I have space remaining:
-                long remainingSpace = m_peerAccess.getFreeSpace() - m_body.length;
-                if (remainingSpace >= 0)
+                // If I'm not storing this chunk:
+                if (!m_peerAccess.isStoredChunk(storedChunk))
                 {
-                    m_peerAccess.addStoredChunk(storedChunk);
+                    // Only if I have space remaining:
+                    long remainingSpace = m_peerAccess.getFreeSpace() - m_body.length;
+                    if (remainingSpace >= 0)
+                    {
+                        m_peerAccess.addTemporarilyStoredChunk(storedChunk);
 
-                    // Wait a random time between 0 and 400 ms:
-                    try
-                    { Thread.sleep(RandomNumber.getInt(0, 400)); }
-                    catch (InterruptedException e)
-                    { e.printStackTrace(); }
+                        // Wait a random time between 0 and 400 ms:
+                        try
+                        {
+                            Thread.sleep(RandomNumber.getInt(0, 400));
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
 
-                    // If the number of stored messages is already equals or greater than the desired replication degree:
-                    if(m_peerAccess.getStoredMessagesReceived(storedChunk) >= storedChunk.getOptimalReplicationDeg().getValue())
-                        return;
+                        // If the number of stored messages is already equal or greater than the desired replication degree, we can remove it
+                        if (m_peerAccess.getStoredMessagesReceivedTemporarily(storedChunk) >= storedChunk.getOptimalReplicationDeg().getValue())
+                        {
+                            //System.out.println("Recebi stores: " + m_peerAccess.getStoredMessagesReceivedTemporarily(storedChunk));
+                            m_peerAccess.deleteTemporarilyStoredChunk(storedChunk);
+                            return;
+                        }
 
-                    // Send Stored Message:
-                    StoredMessage message = new StoredMessage(new Version('1','0'), storedChunk.getFileId(), storedChunk.getChunkNo());
+                        // Send Stored Message:
+                        StoredMessage message = new StoredMessage(new Version('1', '0'), storedChunk.getFileId(), storedChunk.getChunkNo());
+                        Header header = new Header();
+                        header.addMessage(message);
+                        m_peerAccess.sendHeaderMC(header);
+
+                        // Store the chunk physically in a file and add it to the list:
+                        m_peerAccess.moveTempChunkToStoredAndInc(storedChunk);
+                        storedChunk.storeFile();
+                    }
+
+                    // TODO: do stuff if no space available
+                    if (remainingSpace <= 0)
+                    {
+                        // Apagar todos os chunks c/ replicação maior que necessário
+
+                    }
+                }
+
+                // If I'm already storing this chunk: send stored again
+                else
+                {
+                    StoredMessage message = new StoredMessage(new Version('1', '0'), storedChunk.getFileId(), storedChunk.getChunkNo());
                     Header header = new Header();
                     header.addMessage(message);
                     m_peerAccess.sendHeaderMC(header);
-
-                    // Store the chunk physically in a file:
-                    storedChunk.storeFile();
                 }
-
-                // TODO: do stuff if no space available
-                if (remainingSpace <= 0)
-                {
-                    // Apagar todos os chunks c/ replicação maior que necessário
-
-                }
-            }
-
-            // If I'm already storing this chunk: send stored again
-            else
-            {
-                StoredMessage message = new StoredMessage(new Version('1', '0'), storedChunk.getFileId(), storedChunk.getChunkNo());
-                Header header = new Header();
-                header.addMessage(message);
-                m_peerAccess.sendHeaderMC(header);
             }
         }
         // If it's MY chunk from one of my files: ignore it

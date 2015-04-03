@@ -22,17 +22,25 @@ public interface IPeerDataChange
 
     void addHomeFile(BackupFile file);
     void addHomeChunk(Chunk identifier);
-    void addStoredChunk(Chunk chunk);
+    void addTemporarilyStoredChunk(Chunk chunk);
+    void deleteTemporarilyStoredChunk(Chunk chunk);
+    void moveTempChunkToStoredAndInc(Chunk chunk);
+
     void addHomeChunkIP(Chunk identifier, String address);
     void addStoredChunkIP(Chunk chunk, String address);
+    void addTemporarilyStoredChunkIP(Chunk chunk, String address);
 
     void deleteHomeFile(FileId fileId);
 
     boolean isHomeChunk(Chunk identifier);
     boolean isStoredChunk(Chunk chunk);
+    boolean isTemporarilyStoredChunk(Chunk chunk);
 
     Chunk getStoredChunk(FileId fileId, ChunkNo chunkNo);
-    int getStoredMessagesReceived(Chunk chunk);
+
+    int getStoredMessagesReceivedHomeOrStored(Chunk chunk);
+    int getStoredMessagesReceivedTemporarily(Chunk identifier);
+
 
     long getFreeSpace();
 }
