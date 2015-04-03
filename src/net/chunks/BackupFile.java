@@ -112,13 +112,11 @@ public class BackupFile
 
     private void fillChunks(FileInputStream fileStream, Chunk[] fileChunks, int lastChunkSize) throws IOException
     {
-        byte[] chunkData = new byte[s_MAX_CHUNK_SIZE];
-        byte[] lastChunkData = new byte[lastChunkSize];
-
         for(int i = 0; i < fileChunks.length; i++)
         {
             if (i == fileChunks.length - 1) // last chunk:
             {
+                byte[] lastChunkData = new byte[lastChunkSize];
                 if (fileStream.read(lastChunkData) != lastChunkSize)
                 {
                     System.err.println("BackupFile::fillChunks: Error reading from file");
@@ -129,6 +127,7 @@ public class BackupFile
             }
             else // others:
             {
+                byte[] chunkData = new byte[s_MAX_CHUNK_SIZE];
                 if (fileStream.read(chunkData) != s_MAX_CHUNK_SIZE)
                 {
                     System.err.println("BackupFile::fillChunks: Error reading from file");
