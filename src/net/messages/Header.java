@@ -79,8 +79,10 @@ public class Header
     public void addMessage(String message) throws InvalidParameterException
     {
         String[] fields = Message.splitMessage(message);
-        if(fields.length < 2)
-            throw new InvalidParameterException();
+
+        // Ignoring unknown message:
+        if(fields.length == 0)
+            return;
 
         String messageType = fields[0];
         switch (messageType)
