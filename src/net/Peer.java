@@ -335,7 +335,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                                 TcpAvailableMessage tcpAvailableMessage = (TcpAvailableMessage) message;
 
                                 Task task = new SendChunkTcpTask(this, wantedChunk, peerAddress, tcpAvailableMessage.getPort());
-                                m_waitingMessageTasks.add(task);
                                 new Thread(task).start();
                             }
                         }

@@ -8,6 +8,7 @@ import net.chunks.Version;
 import net.messages.*;
 import net.tasks.ReceiveChunkTcpTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -15,8 +16,6 @@ import java.util.ArrayList;
  */
 public class RestoreService extends UserService
 {
-    private static final int s_TCP_PORT = 10198;
-
     private ArrayList<Chunk> m_chunkList = new ArrayList<>();
     private Chunk m_currentChunk;
 
@@ -57,34 +56,45 @@ public class RestoreService extends UserService
     {
         for (int chunkNo = 0; chunkNo < m_file.getNumberChunks(); chunkNo++)
         {
-            // Create get chunk message:
-            m_currentChunk = new Chunk(m_file.getFileId(), new ChunkNo(chunkNo));
-            GetChunkMessage message = new GetChunkMessage(new Version('1','0'), m_file.getFileId(), new ChunkNo(chunkNo));
-            Header header = new Header();
-            header.addMessage(message);
-            header.addMessage(new TcpAvailableMessage(s_TCP_PORT));
-            m_peerAccess.sendHeaderMC(header);
-
-            // Create task to listen for the body if the peer supports the enhanced mode:
-            Thread thread = new Thread(new ReceiveChunkTcpTask(this, s_TCP_PORT));
-            thread.start();
-
-            // Wait for chunk message:
             try
-            { wait(); thread.interrupt(); }
+            {
+                // Create task:
+                ReceiveChunkTcpTask receiveChunkTcpTask = new ReceiveChunkTcpTask(this);
+                int serverSocketPort = receiveChunkTcpTask.getServerSocketPort();
+
+                // Create get chunk message:
+                m_currentChunk = new Chunk(m_file.getFileId(), new ChunkNo(chunkNo));
+                GetChunkMessage message = new GetChunkMessage(new Version('1','0'), m_file.getFileId(), new ChunkNo(chunkNo));
+                Header header = new Header();
+                header.addMessage(message);
+                header.addMessage(new TcpAvailableMessage(serverSocketPort));
+                m_peerAccess.sendHeaderMC(header);
+
+                // Start task to listen for the body if the peer supports the enhanced mode:
+                Thread thread = new Thread(receiveChunkTcpTask);
+                thread.start();
+
+                // Wait for chunk message:
+                wait();
+                thread.interrupt();
+
+                // Recover file:
+                m_file.recoverFromChunks(m_chunkList);
+
+                System.out.println("Restore Service - A restore ended successfuly!");
+
+                // End service:
+                m_peerAccess.removeUserService(this);
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
             catch (InterruptedException e)
-            { e.printStackTrace();
-                System.err.println("Error waiting in RestoreService"); System.exit(-2); }
+            {
+                System.err.println("Error waiting in RestoreService");
+                System.exit(-2);
+            }
         }
-
-        // Recover file:
-        m_file.recoverFromChunks(m_chunkList);
-
-        System.out.println("Restore Service - A restore ended successfuly!");
-
-        // End service:
-        m_peerAccess.removeUserService(this);
     }
-
-
 }

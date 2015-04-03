@@ -13,12 +13,17 @@ import java.net.Socket;
 public class ReceiveChunkTcpTask implements Runnable
 {
     private RestoreService m_restoreService;
-    private int m_port;
+    private ServerSocket m_serverSocket;
 
-    public ReceiveChunkTcpTask(RestoreService restoreService, int port)
+    public ReceiveChunkTcpTask(RestoreService restoreService) throws IOException
     {
         m_restoreService = restoreService;
-        m_port = port;
+        m_serverSocket = new ServerSocket(0);
+    }
+
+    public int getServerSocketPort()
+    {
+        return m_serverSocket.getLocalPort();
     }
 
     @Override
@@ -26,9 +31,7 @@ public class ReceiveChunkTcpTask implements Runnable
     {
         try
         {
-            ServerSocket serverSocket = new ServerSocket(m_port);
-
-            Socket socket = serverSocket.accept();
+            Socket socket = m_serverSocket.accept();
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
             int length;
@@ -40,7 +43,7 @@ public class ReceiveChunkTcpTask implements Runnable
                 readLength += inputStream.read(data, readLength, length);
 
             socket.close();
-            serverSocket.close();
+            m_serverSocket.close();
 
             // Send data received to the restore service:
             m_restoreService.setBody(data);
