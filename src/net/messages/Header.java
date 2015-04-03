@@ -71,7 +71,7 @@ public class Header
         return builder.toString();
     }
 
-    public void addMessage(Message message)
+    public void addMessage(IHeaderLine message)
     {
         m_messages.add(message);
     }
@@ -79,7 +79,7 @@ public class Header
     public void addMessage(String message) throws InvalidParameterException
     {
         String[] fields = Message.splitMessage(message);
-        if(fields.length < 3)
+        if(fields.length < 2)
             throw new InvalidParameterException();
 
         String messageType = fields[0];
@@ -109,8 +109,13 @@ public class Header
                 addMessage(StoredMessage.createMessage(fields));
                 break;
 
+            case TcpAvailableMessage.s_TYPE:
+                addMessage(TcpAvailableMessage.createMessage(fields));
+                break;
+
             default:
-                throw new InvalidParameterException();
+                // Ignore unknown message
+                break;
         }
     }
 

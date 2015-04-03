@@ -5,10 +5,8 @@ import net.chunks.BackupFile;
 import net.chunks.Chunk;
 import net.chunks.ChunkNo;
 import net.chunks.Version;
-import net.messages.ChunkMessage;
-import net.messages.GetChunkMessage;
-import net.messages.Header;
-import net.messages.Message;
+import net.messages.*;
+import net.tasks.ReceiveChunkTcpTask;
 
 import java.util.ArrayList;
 
@@ -17,6 +15,8 @@ import java.util.ArrayList;
  */
 public class RestoreService extends UserService
 {
+    private static final int s_TCP_PORT = 10198;
+
     private ArrayList<Chunk> m_chunkList = new ArrayList<>();
     private Chunk m_currentChunk;
 
@@ -34,16 +34,22 @@ public class RestoreService extends UserService
                 && message.getFileId().equals(m_currentChunk.getFileId())
                 && ((ChunkMessage) message).getChunkNo().equals(m_currentChunk.getChunkNo()))
         {
-            m_currentChunk.setData(body);
-            m_chunkList.add(m_currentChunk);
-            m_currentChunk = null;
+            setBody(body);
 
-            // notify the run() that this chunk is ready!
-            notify();
             return true;
         }
         else
             return false;
+    }
+
+    public synchronized void setBody(byte[] body)
+    {
+        m_currentChunk.setData(body);
+        m_chunkList.add(m_currentChunk);
+        m_currentChunk = null;
+
+        // notify the run() that this chunk is ready!
+        notify();
     }
 
     @Override
@@ -56,11 +62,16 @@ public class RestoreService extends UserService
             GetChunkMessage message = new GetChunkMessage(new Version('1','0'), m_file.getFileId(), new ChunkNo(chunkNo));
             Header header = new Header();
             header.addMessage(message);
+            //header.addMessage(new TcpAvailableMessage(s_TCP_PORT));
             m_peerAccess.sendHeaderMC(header);
+
+            // Create task to listen for the body if the peer supports the enhanced mode:
+            Thread thread = new Thread(new ReceiveChunkTcpTask(this, s_TCP_PORT));
+            thread.start();
 
             // Wait for chunk message:
             try
-            { wait(); }
+            { wait(); thread.interrupt(); }
             catch (InterruptedException e)
             { e.printStackTrace();
                 System.err.println("Error waiting in RestoreService"); System.exit(-2); }
