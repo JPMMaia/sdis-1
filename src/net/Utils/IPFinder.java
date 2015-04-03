@@ -19,6 +19,7 @@ public class IPFinder
         {
             MulticastSocket socket = new MulticastSocket(PORT);
             socket.joinGroup(InetAddress.getByName(ADDR));
+            socket.setTimeToLive(0);
 
             String ss = "test";
             DatagramPacket packet = new DatagramPacket(ss.getBytes(), ss.getBytes().length, InetAddress.getByName(ADDR), PORT);

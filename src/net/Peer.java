@@ -10,7 +10,6 @@ import net.services.BackupService;
 import net.services.RestoreService;
 import net.services.UserService;
 import net.tasks.ProcessGetChunkTask;
-import net.tasks.SendChunkTcpTask;
 import net.tasks.StoreTask;
 import net.tasks.Task;
 
@@ -88,7 +87,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     public static void main(String[] args) throws IOException, AlreadyBoundException
     {
         // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889
-        if (args.length != 6)
+        if(args.length != 6)
         {
             System.err.println("Peer::main: Number of arguments must be 6!");
             System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889");
@@ -121,7 +120,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Bind in the registry:
             Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
             registry.rebind(Peer.class.getName(), peerService);
-        } catch (Exception e)
+        }
+        catch(Exception e)
         {
             System.err.println("Peer::main: RMI is already running on another Peer!");
         }
@@ -148,7 +148,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             m_activeServices.put(file.getFileId(), backup);
 
             return "Peer::backupFile Your backup request was registered! Please come again :)";
-        } catch (Exception e)
+        }
+        catch(Exception e)
         {
             return "Peer::backupFile A problem happened: " + e.getMessage();
         }
@@ -160,7 +161,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         StringBuilder builder = new StringBuilder();
         builder.append("Index - Filename - Last Modified\n\n");
 
-        for (int i = 0; i < m_homeFiles.size(); i++)
+        for(int i=0; i < m_homeFiles.size(); i++)
             builder.append(i).append(". - ")
                     .append(m_homeFiles.get(i).getFilePath()).append(" - ")
                     .append(m_homeFiles.get(i).getLastModified()).append("\n");
@@ -194,7 +195,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             m_activeServices.put(file.getFileId(), restore);
 
             return "Peer::restoreFile Your restore request was registered! Please come again :)";
-        } catch (Exception e)
+        }
+        catch(Exception e)
         {
             return "Peer::restoreFile A problem happened: " + e.getMessage();
         }
@@ -218,13 +220,14 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             deleteHomeFile(file.getFileId());
 
             // Send deleteFile:
-            DeleteMessage message = new DeleteMessage(new Version('1', '0'), file.getFileId());
+            DeleteMessage message = new DeleteMessage(new Version('1','0'), file.getFileId());
             Header header = new Header();
             header.addMessage(message);
             sendHeaderMC(header);
 
             return "Peer::deleteFile Your delete file request was registered! Please come again :)";
-        } catch (Exception e)
+        }
+        catch(Exception e)
         {
             return "Peer::deleteFile A problem happened: " + e.getMessage();
         }
@@ -240,7 +243,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
 
             return "Peer::setMaskDiskSpace Your set disc space request was registered! Please come again :)";
-        } catch (Exception e)
+        }
+        catch(Exception e)
         {
             return "Peer::setMaskDiskSpace A problem happened: " + e.getMessage();
         }
@@ -279,96 +283,86 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
             System.out.println("DEBUG: Received " + receivedHeader.getMessage(0).getType() + " from " + peerAddress);
 
-            Message receivedMsg = (Message) receivedHeader.getMessage(0);
-            switch (receivedMsg.getType())
+            // Ignore all headers with more than one message
+            if (receivedHeader.getMessageNumber() == 1)
             {
-                // TODO
-                case PutChunkMessage.s_TYPE:
+                Message receivedMsg = (Message) receivedHeader.getMessage(0);
+                switch(receivedMsg.getType())
                 {
-                    if (receivedHeader.getBody() == null)
-                        throw new InvalidParameterException("Peer::onDataReceived PutChunkMessage must have body!");
-
-                    new Thread(new StoreTask((PutChunkMessage) receivedMsg, receivedHeader.getBody(), peerAddress, this)).start();
-                }
-                break;
-
-                case StoredMessage.s_TYPE:
-                {
-                    //new Thread(new ProcessStoredTask((StoredMessage) receivedMsg, peerAddress, this)).start();
-                    Chunk chunkKey = new Chunk(receivedMsg.getFileId(), ((StoredMessage) receivedMsg).getChunkNo());
-
-                    // Only process a Stored Message if we have that chunk:
-                    if (isHomeChunk(chunkKey))
-                        addHomeChunkIP(chunkKey, peerAddress);
-                    else if (isStoredChunk(chunkKey))
-                        addStoredChunkIP(chunkKey, peerAddress);
-                }
-                break;
-
-                case GetChunkMessage.s_TYPE:
-                {
-                    GetChunkMessage getChunkMessage = (GetChunkMessage) receivedMsg;
-
-                    // Only respond to this get chunk message if we stored the chunk:
-                    Chunk chunkKey = new Chunk(getChunkMessage.getFileId(), getChunkMessage.getChunkNo());
-                    if (m_storedChunks.containsKey(chunkKey))
+                    // TODO
+                    case PutChunkMessage.s_TYPE:
                     {
-                        // Get the stored chunk and send it to the task:
-                        Chunk wantedChunk = getStoredChunk(getChunkMessage.getFileId(), getChunkMessage.getChunkNo());
+                        if (receivedHeader.getBody() == null)
+                            throw new InvalidParameterException("Peer::onDataReceived PutChunkMessage must have body!");
 
-                        // Processing normal header:
-                        if(receivedHeader.getMessageNumber() == 1)
+                        new Thread(new StoreTask((PutChunkMessage) receivedMsg, receivedHeader.getBody(), peerAddress, this)).start();
+                    }
+                        break;
+
+                    case StoredMessage.s_TYPE:
+                    {
+                        //new Thread(new ProcessStoredTask((StoredMessage) receivedMsg, peerAddress, this)).start();
+                        Chunk chunkKey = new Chunk(receivedMsg.getFileId(), ((StoredMessage) receivedMsg).getChunkNo());
+
+                        // Only process a Stored Message if we have that chunk:
+                        if (isHomeChunk(chunkKey))
+                            addHomeChunkIP(chunkKey, peerAddress);
+                        else if (isStoredChunk(chunkKey))
+                            addStoredChunkIP(chunkKey, peerAddress);
+                        else if (isTemporarilyStoredChunk(chunkKey))
+                            addTemporarilyStoredChunkIP(chunkKey, peerAddress);
+                    }
+                        break;
+
+                    case GetChunkMessage.s_TYPE:
+                    {
+                        // Only respond to this get chunk message if we stored the chunk:
+                        Chunk chunkKey = new Chunk(receivedMsg.getFileId(), ((GetChunkMessage) receivedMsg).getChunkNo());
+                        if (m_storedChunks.containsKey(chunkKey))
                         {
-                            Task task = new ProcessGetChunkTask(getChunkMessage, wantedChunk, peerAddress, this);
+                            // Get the stored chunk and send it to the task:
+                            Chunk wantedChunk = getStoredChunk(receivedMsg.getFileId(), ((GetChunkMessage) receivedMsg).getChunkNo());
+
+                            Task task = new ProcessGetChunkTask((GetChunkMessage) receivedMsg, wantedChunk, peerAddress, this);
                             m_waitingMessageTasks.add(task);
                             new Thread(task).start();
                         }
-                        // Processing enhanced message:
-                        else if(receivedHeader.getMessageNumber() == 2)
-                        {
-                            IHeaderLine message = receivedHeader.getMessage(1);
-                            if(message.getType().equals(TcpAvailableMessage.s_TYPE))
-                            {
-                                TcpAvailableMessage tcpAvailableMessage = (TcpAvailableMessage) message;
-
-                                Task task = new SendChunkTcpTask(this, wantedChunk, peerAddress, tcpAvailableMessage.getPort());
-                                m_waitingMessageTasks.add(task);
-                                new Thread(task).start();
-                            }
-                        }
                     }
+                        break;
+
+                    case ChunkMessage.s_TYPE:
+                    {
+                        if (receivedHeader.getBody() == null)
+                            throw new InvalidParameterException("Peer::onDataReceived ChunkMessage must have body!");
+
+                        distributeMessageServices(receivedMsg, receivedHeader.getBody());
+                        distributeMessageTasks(receivedMsg, receivedHeader.getBody());
+                    }
+                        break;
+
+
+                    case DeleteMessage.s_TYPE:
+                    {
+                        deleteStoredChunks(receivedMsg.getFileId());
+                    }
+                        break;
+
+                    case RemovedMessage.s_TYPE:
+                    {
+                        //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
+                    }
+                        break;
+
+                    default:
+                        System.err.println("Peer::onDataReceived Unknown message received: " + receivedMsg.getType());
+                        break;
                 }
-                break;
-
-                case ChunkMessage.s_TYPE:
-                {
-                    if (receivedHeader.getBody() == null)
-                        throw new InvalidParameterException("Peer::onDataReceived ChunkMessage must have body!");
-
-                    distributeMessageServices(receivedMsg, receivedHeader.getBody());
-                    distributeMessageTasks(receivedMsg, receivedHeader.getBody());
-                }
-                break;
-
-
-                case DeleteMessage.s_TYPE:
-                {
-                    deleteStoredChunks(receivedMsg.getFileId());
-                }
-                break;
-
-                case RemovedMessage.s_TYPE:
-                {
-                    //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
-                }
-                break;
-
-                default:
-                    System.err.println("Peer::onDataReceived Unknown message received: " + receivedMsg.getType());
-                    break;
             }
+
+            else
+                System.err.println("Peer::onDataReceived Received header with more than 1 message, ignoring");
         }
-        catch (Exception e)
+        catch(Exception e)
         {
             System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e);
         }
@@ -376,7 +370,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
     synchronized private void distributeMessageServices(Message message, byte[] body)
     {
-        for (FileId key : m_activeServices.keySet())
+        for(FileId key: m_activeServices.keySet())
         {
             if (m_activeServices.get(key).wantsMessage(message, body))
                 return;
@@ -385,7 +379,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
     synchronized private void distributeMessageTasks(Message message, byte[] body)
     {
-        for (Task task : m_waitingMessageTasks)
+        for(Task task: m_waitingMessageTasks)
         {
             if (task.wantsMessage(message, body))
                 return;
@@ -398,7 +392,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         for (Iterator<Map.Entry<Chunk, HashSet<String>>> it = m_storedChunks.entrySet().iterator(); it.hasNext(); )
         {
             Map.Entry<Chunk, HashSet<String>> entry = it.next();
-            if (entry.getKey().getFileId().equals(fileId))
+            if(entry.getKey().getFileId().equals(fileId))
             {
                 entry.getKey().deleteFile(); // delete physical file
                 it.remove(); // delete from hashtable
@@ -422,36 +416,27 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void sendHeaderMDB(Header header)
     {
         try
-        {
-            m_sendSocket.sendHeader(header, m_mdbChannel.getAddress(), m_mdbChannel.getPort());
-        } catch (IOException e)
-        {
-            System.out.println("Oops, looks like sending to MDB went wrong!");
-        }
+        { m_sendSocket.sendHeader(header, m_mdbChannel.getAddress(), m_mdbChannel.getPort()); }
+        catch (IOException e)
+        { System.out.println("Oops, looks like sending to MDB went wrong!"); }
     }
 
     @Override
     synchronized public void sendHeaderMDR(Header header)
     {
         try
-        {
-            m_sendSocket.sendHeader(header, m_mdrChannel.getAddress(), m_mdrChannel.getPort());
-        } catch (IOException e)
-        {
-            System.out.println("Oops, looks like sending to MDR went wrong!");
-        }
+        { m_sendSocket.sendHeader(header, m_mdrChannel.getAddress(), m_mdrChannel.getPort()); }
+        catch (IOException e)
+        { System.out.println("Oops, looks like sending to MDR went wrong!"); }
     }
 
     @Override
     synchronized public void sendHeaderMC(Header header)
     {
         try
-        {
-            m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort());
-        } catch (IOException e)
-        {
-            System.out.println("Oops, looks like sending to MC went wrong!");
-        }
+        { m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort()); }
+        catch (IOException e)
+        { System.out.println("Oops, looks like sending to MC went wrong!"); }
     }
 
     @Override
@@ -503,9 +488,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         // Remove all home files that have the following fileId:
         ListIterator<BackupFile> iter = m_homeFiles.listIterator();
-        while (iter.hasNext())
+        while(iter.hasNext())
         {
-            if (iter.next().getFileId().equals(fileId))
+            if(iter.next().getFileId().equals(fileId))
                 iter.remove();
         }
 
@@ -513,7 +498,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         for (Iterator<Map.Entry<Chunk, HashSet<String>>> it = m_homeChunks.entrySet().iterator(); it.hasNext(); )
         {
             Map.Entry<Chunk, HashSet<String>> entry = it.next();
-            if (entry.getKey().getFileId().equals(fileId))
+            if(entry.getKey().getFileId().equals(fileId))
                 it.remove();
         }
     }
@@ -533,9 +518,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 System.out.println("DEBUG: ReplicationDegree not found in homeChunks or storedChunks, assumed 0");
                 return 0;
-            } else
+            }
+            else
                 return m_storedChunks.get(identifier).size();
-        } else
+        }
+        else
             return m_homeChunks.get(identifier).size();
     }
 
@@ -556,7 +543,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         Chunk keyChunk = new Chunk(fileId, chunkNo);
 
-        for (Chunk key : m_storedChunks.keySet())
+        for(Chunk key: m_storedChunks.keySet())
         {
             if (key.equals(keyChunk))
                 return key;

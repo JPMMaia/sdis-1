@@ -44,7 +44,7 @@ public class PutChunkTask extends Task
                 Thread.sleep(delayTime);
 
                 // Backup success:
-                if (m_peerAccess.getStoredMessagesReceived(m_chunk) >= m_chunk.getOptimalReplicationDeg().getValue())
+                if (m_peerAccess.getStoredMessagesReceivedHomeOrStored(m_chunk) >= m_chunk.getOptimalReplicationDeg().getValue())
                 {
                     setReturn(SENT);
                     return;
