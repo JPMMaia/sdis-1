@@ -34,14 +34,18 @@ public class SendChunkTcpTask extends Task
     {
         try
         {
+            System.out.println("SendChunkTcpTask::run begin!");
+
             Socket socket = new Socket(m_address, m_port);
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
             byte[] data = m_chunk.getData();
-            outputStream.write(data.length);
+            outputStream.writeInt(data.length);
             outputStream.write(data);
 
             socket.close();
+
+            System.out.println("SendChunkTcpTask::run end!");
         }
         catch (IOException e)
         {

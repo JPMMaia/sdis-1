@@ -31,22 +31,31 @@ public class ReceiveChunkTcpTask implements Runnable
     {
         try
         {
+            System.out.println("ReceiveChunkTcpTask::run begin!");
+
             Socket socket = m_serverSocket.accept();
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
 
             int length;
-            length = inputStream.read();
+            length = inputStream.readInt();
             byte[] data = new byte[length];
 
-            int readLength = 0;
-            while(readLength < length)
-                readLength += inputStream.read(data, readLength, length);
+            int readBytes = 0;
+            int remainingBytes = length;
+            while(readBytes < remainingBytes)
+            {
+                readBytes += inputStream.read(data, readBytes, remainingBytes);
+                remainingBytes -= readBytes;
+            }
+
 
             socket.close();
             m_serverSocket.close();
 
             // Send data received to the restore service:
             m_restoreService.setBody(data);
+
+            System.out.println("ReceiveChunkTcpTask::run end!");
         }
         catch (IOException e)
         {

@@ -57,6 +57,8 @@ public class RestoreService extends UserService
         {
             try
             {
+                System.out.println("RestoreService::run begin!");
+
                 // Create task:
                 ReceiveChunkTcpTask receiveChunkTcpTask = new ReceiveChunkTcpTask(this);
                 int serverSocketPort = receiveChunkTcpTask.getServerSocketPort();
@@ -76,6 +78,8 @@ public class RestoreService extends UserService
                 // Wait for chunk message:
                 wait();
                 thread.interrupt();
+
+                System.out.println("RestoreService::run end!");
             }
             catch (IOException e)
             {
