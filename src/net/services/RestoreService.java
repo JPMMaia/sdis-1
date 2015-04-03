@@ -62,7 +62,7 @@ public class RestoreService extends UserService
             GetChunkMessage message = new GetChunkMessage(new Version('1','0'), m_file.getFileId(), new ChunkNo(chunkNo));
             Header header = new Header();
             header.addMessage(message);
-            //header.addMessage(new TcpAvailableMessage(s_TCP_PORT));
+            header.addMessage(new TcpAvailableMessage(s_TCP_PORT));
             m_peerAccess.sendHeaderMC(header);
 
             // Create task to listen for the body if the peer supports the enhanced mode:
@@ -80,7 +80,7 @@ public class RestoreService extends UserService
         // Recover file:
         m_file.recoverFromChunks(m_chunkList);
 
-        System.out.println("RecoverService - A backup ended successfuly!");
+        System.out.println("Restore Service - A restore ended successfuly!");
 
         // End service:
         m_peerAccess.removeUserService(this);
