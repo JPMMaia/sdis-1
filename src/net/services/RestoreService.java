@@ -34,7 +34,6 @@ public class RestoreService extends UserService
                 && ((ChunkMessage) message).getChunkNo().equals(m_currentChunk.getChunkNo()))
         {
             setBody(body);
-
             return true;
         }
         else
@@ -77,18 +76,12 @@ public class RestoreService extends UserService
                 // Wait for chunk message:
                 wait();
                 thread.interrupt();
-
-                // Recover file:
-                m_file.recoverFromChunks(m_chunkList);
-
-                System.out.println("Restore Service - A restore ended successfuly!");
-
-                // End service:
-                m_peerAccess.removeUserService(this);
             }
             catch (IOException e)
             {
                 e.printStackTrace();
+                System.err.println("Error IO Exception in Restore Service");
+                System.exit(-3);
             }
             catch (InterruptedException e)
             {
@@ -96,5 +89,13 @@ public class RestoreService extends UserService
                 System.exit(-2);
             }
         }
+
+        // Recover file:
+        m_file.recoverFromChunks(m_chunkList);
+
+        System.out.println("Restore Service - A restore ended successfuly!");
+
+        // End service:
+        m_peerAccess.removeUserService(this);
     }
 }
