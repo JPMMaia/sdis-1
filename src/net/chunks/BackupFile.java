@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class BackupFile
 {
     private static final int s_MAX_CHUNK_SIZE = 64000;
-    private static final String s_RECOVER_DIRECTORY = "recover/";
+    private static final String s_RESTORE_DIRECTORY = "restore/";
     private long m_fileSize;
     private int m_numberOfChunks;
     private String m_filePath;
@@ -84,13 +84,13 @@ public class BackupFile
     {
         if (chunksArray.size() != m_numberOfChunks)
         {
-            System.err.println("BackupFile::recover: Recover not possible, different chunk number!");
+            System.err.println("BackupFile::recoverFromChunks: Recover not possible, different chunk number!");
             return;
         }
 
         try
         {
-            File recoverFile = new File(s_RECOVER_DIRECTORY + m_fileName);
+            File recoverFile = new File(s_RESTORE_DIRECTORY + m_fileName);
             FileOutputStream recoverStream = new FileOutputStream(recoverFile);
 
             for (Chunk chunk: chunksArray)

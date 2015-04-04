@@ -79,10 +79,13 @@ public class Header
     public void addMessage(String message) throws InvalidParameterException
     {
         String[] fields = Message.splitMessage(message);
-        if(fields.length < 2)
-            throw new InvalidParameterException();
 
-        String messageType = fields[0];
+        String messageType;
+        if(fields.length != 0)
+            messageType = fields[0];
+        else
+            messageType = message;
+
         switch (messageType)
         {
             case ChunkMessage.s_TYPE:
@@ -111,6 +114,10 @@ public class Header
 
             case TcpAvailableMessage.s_TYPE:
                 addMessage(TcpAvailableMessage.createMessage(fields));
+                break;
+
+            case ValidMessage.s_TYPE:
+                addMessage(ValidMessage.createMessage(fields));
                 break;
 
             default:
