@@ -299,6 +299,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         throw new InvalidParameterException("Peer::onDataReceived PutChunkMessage must have body!");
 
                     new Thread(new StoreTask((PutChunkMessage) receivedMsg, receivedHeader.getBody(), peerAddress, this)).start();
+
+                    // Distribute messages for Reclaim tasks:
+                    distributeMessageTasks(receivedMsg, receivedHeader.getBody());
                 }
                 break;
 
@@ -415,7 +418,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
         catch (Exception e)
         {
-            System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e);
+            System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e.getMessage());
         }
     }
 
@@ -535,8 +538,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             System.out.println("DEBUG: TemporarilyStored list already has that chunk!");
         else
         {
-            HashSet<String> addresses = new HashSet<>();
-            m_tempStoredChunks.put(chunk, addresses);
+            m_tempStoredChunks.put(chunk, new HashSet<>());
         }
     }
 
