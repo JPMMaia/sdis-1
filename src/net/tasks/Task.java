@@ -3,10 +3,12 @@ package net.tasks;
 import net.IPeerDataChange;
 import net.messages.Message;
 
+import java.io.Serializable;
+
 /**
  * Created by Miguel on 30-03-2015.
  */
-public abstract class Task implements Runnable
+public abstract class Task implements Runnable, Serializable
 {
     protected IPeerDataChange m_peerAccess;
     private volatile int m_returnValue;

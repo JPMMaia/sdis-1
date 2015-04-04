@@ -11,8 +11,7 @@ import net.services.RestoreService;
 import net.services.UserService;
 import net.tasks.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.rmi.AlreadyBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -24,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by Jo�o on 20/03/2015.
  */
-public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataChange
+public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataChange, Serializable
 {
     // RMI Service Attributes:
     public static final String s_SERVICE_NAME = Peer.class.getName();
@@ -32,12 +31,14 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     public static final int s_SERVICE_PORT = 1099;
 
     private static String s_MY_ADDRESS;
+    private static String s_SERIALIZATION_FOLDER = "serialization/";
+    private static String s_SERIALIZATION_FILE = "session.ser";
 
     // Multicast channels:
-    private MulticastChannelReceive m_mcChannel;
-    private MulticastChannelReceive m_mdbChannel;
-    private MulticastChannelReceive m_mdrChannel;
-    private MulticastChannelSend m_sendSocket;
+    transient private MulticastChannelReceive m_mcChannel;
+    transient private MulticastChannelReceive m_mdbChannel;
+    transient private MulticastChannelReceive m_mdrChannel;
+    transient private MulticastChannelSend m_sendSocket;
 
     private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
     private ArrayList<Task> m_waitingMessageTasks = new ArrayList<>();
@@ -51,7 +52,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private ConcurrentHashMap<Chunk, HashSet<String>> m_tempStoredChunks = new ConcurrentHashMap<>(); // IP Addresses for each temporarily stored chunks
     private HashMap<String, DeleteMessage> m_deleteMessages = new HashMap<>();
 
-    public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
+    public Peer()
+    {
+    }
+
+    public void initialize(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
         m_mcChannel = new MulticastChannelReceive(mcAddress, mcPort);
         m_mcChannel.addListener(this);
@@ -70,6 +75,27 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         System.out.println("Peer running at address: " + s_MY_ADDRESS);
     }
 
+    public void saveState()
+    {
+        FileOutputStream fileOut = null;
+        try
+        {
+            fileOut = new FileOutputStream(s_SERIALIZATION_FOLDER + s_SERIALIZATION_FILE);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(this);
+            out.close();
+            fileOut.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     synchronized public void run()
     {
         Thread mcThread = new Thread(m_mcChannel);
@@ -82,7 +108,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         mdrThread.start();
     }
 
-    public static void main(String[] args) throws IOException, AlreadyBoundException
+    public static void main(String[] args) throws IOException, AlreadyBoundException, ClassNotFoundException
     {
         // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889
         if (args.length != 6)
@@ -106,8 +132,30 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         String mdrAddress = args[4];
         int mdrPort = Integer.parseInt(args[5]);
 
-        // Create peer:
-        Peer peer = new Peer(mcAddress, mcPort, mdbAddress, mdbPort, mdrAddress, mdrPort);
+        // Create serialization folder if it doesn't exists:
+        File folder = new File(s_SERIALIZATION_FOLDER);
+        if(!folder.exists())
+            folder.mkdir();
+
+        Peer peer;
+
+        // If serialization file exists:
+        File file = new File(s_SERIALIZATION_FOLDER + s_SERIALIZATION_FILE);
+        if(file.exists())
+        {
+            FileInputStream fileIn = new FileInputStream(file);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            peer = (Peer) in.readObject();
+            in.close();
+            fileIn.close();
+        }
+        else
+        {
+            peer = new Peer();
+        }
+
+        // Initialize peer:
+        peer.initialize(mcAddress, mcPort, mdbAddress, mdbPort, mdrAddress, mdrPort);
         peer.run();
 
         try
@@ -146,6 +194,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Add to the active services list:
             m_activeServices.put(file.getFileId(), backup);
 
+            saveState();
             return "Peer::backupFile Your backup request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -192,6 +241,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Add to the active services list:
             m_activeServices.put(file.getFileId(), restore);
 
+            saveState();
             return "Peer::restoreFile Your restore request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -222,6 +272,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             header.addMessage(message);
             sendHeaderMC(header);
 
+            saveState();
             return "Peer::deleteFile Your delete file request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -249,6 +300,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
             }
 
+            saveState();
             return "Peer::setMaxDiskSpace Your set disc space request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -416,7 +468,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         catch (Exception e)
         {
             System.err.println("Peer::onDataReceived: Ignoring invalid header: " + e);
+            return;
         }
+
+        saveState();
     }
 
     synchronized private void distributeMessageServices(Message message, byte[] body)
@@ -469,52 +524,71 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 }
             }
         }
+
+        saveState();
     }
 
     @Override
     synchronized public void removeUserService(UserService service)
     {
         m_activeServices.remove(service.getFileId());
+        saveState();
     }
 
     @Override
     synchronized public void removeTask(Task service)
     {
         m_waitingMessageTasks.remove(service);
+        saveState();
     }
 
     @Override
     synchronized public void sendHeaderMDB(Header header)
     {
         try
-        { m_sendSocket.sendHeader(header, m_mdbChannel.getAddress(), m_mdbChannel.getPort()); }
+        {
+            m_sendSocket.sendHeader(header, m_mdbChannel.getAddress(), m_mdbChannel.getPort());
+        }
         catch (IOException e)
-        { System.out.println("Oops, looks like sending to MDB went wrong!"); }
+        {
+            System.out.println("Oops, looks like sending to MDB went wrong!");
+        }
     }
 
     @Override
     synchronized public void sendHeaderMDR(Header header)
     {
         try
-        { m_sendSocket.sendHeader(header, m_mdrChannel.getAddress(), m_mdrChannel.getPort()); }
+        {
+            m_sendSocket.sendHeader(header, m_mdrChannel.getAddress(), m_mdrChannel.getPort());
+        }
         catch (IOException e)
-        { System.out.println("Oops, looks like sending to MDR went wrong!"); }
+        {
+            System.out.println("Oops, looks like sending to MDR went wrong!");
+        }
     }
 
     @Override
     synchronized public void sendHeaderMC(Header header)
     {
         try
-        { m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort()); }
+        {
+            m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort());
+        }
         catch (IOException e)
-        { System.out.println("Oops, looks like sending to MC went wrong!"); }
+        {
+            System.out.println("Oops, looks like sending to MC went wrong!");
+        }
     }
 
     @Override
     synchronized public void addHomeFile(BackupFile file)
     {
         if (!m_homeFiles.contains(file))
+        {
             m_homeFiles.add(file);
+            saveState();
+        }
         else
             System.out.println("DEBUG: Home file already exists!");
     }
@@ -523,7 +597,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void addHomeChunk(Chunk identifier)
     {
         if (!m_homeChunks.containsKey(identifier))
+        {
             m_homeChunks.put(identifier, new HashSet<>());
+            saveState();
+        }
+
         else
             System.out.println("DEBUG: Home chunk already exists!");
     }
@@ -537,6 +615,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         {
             HashSet<String> addresses = new HashSet<>();
             m_tempStoredChunks.put(chunk, addresses);
+            saveState();
         }
     }
 
@@ -544,6 +623,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void deleteTemporarilyStoredChunk(Chunk chunk)
     {
         m_tempStoredChunks.remove(chunk);
+        saveState();
     }
 
     @Override
@@ -556,6 +636,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
             addresses.add(s_MY_ADDRESS); // add my address!
             m_storedChunks.put(chunk, addresses);
+            saveState();
         }
     }
 
@@ -565,7 +646,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (!m_homeChunks.containsKey(identifier))
             System.out.println("DEBUG: The home chunk you're trying to add IP doesn't exist!");
         else
+        {
             m_homeChunks.get(identifier).add(address);
+            saveState();
+        }
     }
 
     @Override
@@ -574,7 +658,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (!m_storedChunks.containsKey(chunk))
             System.out.println("DEBUG: The stored chunk you're trying to add IP doesn't exist!");
         else
+        {
             m_storedChunks.get(chunk).add(address);
+            saveState();
+        }
     }
 
     @Override
@@ -583,14 +670,20 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (!m_tempStoredChunks.containsKey(chunk))
             System.out.println("DEBUG: The temporarily stored chunk you're trying to add IP doesn't exist!");
         else
+        {
             m_tempStoredChunks.get(chunk).add(address);
+            saveState();
+        }
     }
 
     @Override
     public void removeStoredChunkIP(Chunk identifier, String address)
     {
         if (m_storedChunks.containsKey(identifier))
+        {
             m_storedChunks.get(identifier).remove(address);
+            saveState();
+        }
     }
 
     @Override
@@ -611,6 +704,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             if(entry.getKey().getFileId().equals(fileId))
                 it.remove();
         }
+
+        saveState();
     }
 
     @Override
@@ -691,6 +786,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
 
         m_freeStorage -= value;
+
+        saveState();
     }
 
     @Override
@@ -713,6 +810,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 it.remove();
             }
         }
+
+        saveState();
     }
 
     @Override
@@ -734,6 +833,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             m_freeStorage += toDelete.getData().length;
             spaceToDelete -= toDelete.getData().length;
         }
+
+        saveState();
     }
 
     synchronized public Chunk getMostReplicatedRatioChunk()

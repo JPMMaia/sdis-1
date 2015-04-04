@@ -7,7 +7,7 @@ import java.io.*;
 /**
  * Created by Miguel on 23-03-2015.
  */
-public class Chunk
+public class Chunk implements Serializable
 {
     public static final String s_CHUNK_DIRECTORY = "chunks/";
     private FileId m_fileId;

@@ -1,11 +1,12 @@
 package net.chunks;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
  * Created by João on 25/03/2015.
  */
-public class ChunkNo
+public class ChunkNo implements Serializable
 {
     private static final int s_MAX_VALUE = 1000000;
     private int m_value;

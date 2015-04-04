@@ -5,10 +5,12 @@ import net.chunks.BackupFile;
 import net.chunks.Chunk;
 import net.tasks.PutChunkTask;
 
+import java.io.Serializable;
+
 /**
  * Created by Miguel on 30-03-2015.
  */
-public class BackupService extends UserService
+public class BackupService extends UserService implements Serializable
 {
     public BackupService(BackupFile file, IPeerDataChange peerAccess)
     {

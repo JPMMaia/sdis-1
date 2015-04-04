@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * Created by Miguel on 23-03-2015.
  */
-public class BackupFile
+public class BackupFile implements Serializable
 {
     private static final int s_MAX_CHUNK_SIZE = 64000;
     private static final String s_RESTORE_DIRECTORY = "restore/";

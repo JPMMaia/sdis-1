@@ -1,8 +1,9 @@
 package net.chunks;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
-public class ReplicationDeg
+public class ReplicationDeg implements Serializable
 {
     private int m_value;
 

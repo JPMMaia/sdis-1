@@ -9,12 +9,13 @@ import net.messages.*;
 import net.tasks.ReceiveChunkTcpTask;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Created by Miguel on 30-03-2015.
  */
-public class RestoreService extends UserService
+public class RestoreService extends UserService implements Serializable
 {
     private ArrayList<Chunk> m_chunkList = new ArrayList<>();
     private Chunk m_currentChunk;

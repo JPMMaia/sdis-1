@@ -6,10 +6,12 @@ import net.chunks.FileId;
 import net.messages.Header;
 import net.messages.Message;
 
+import java.io.Serializable;
+
 /**
  * Created by Miguel on 30-03-2015.
  */
-public abstract class UserService implements Runnable
+public abstract class UserService implements Runnable, Serializable
 {
     protected BackupFile m_file;
     protected IPeerDataChange m_peerAccess;

@@ -1,6 +1,7 @@
 package net.chunks;
 
 import java.io.File;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
@@ -10,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Created by João on 25/03/2015.
  */
-public class FileId
+public class FileId implements Serializable
 {
     private static final int s_MAX_SIZE = 64;
     private String m_value;

@@ -1,11 +1,12 @@
 package net.chunks;
 
+import java.io.Serializable;
 import java.security.InvalidParameterException;
 
 /**
  * Created by João on 25/03/2015.
  */
-public class Version
+public class Version implements Serializable
 {
     private char m_version;
     private char m_subVersion;
