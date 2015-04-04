@@ -26,7 +26,7 @@ public class ClientTester
             System.out.println("backup <filepath> <replication_degree>");
             System.out.println("printfiles");
             System.out.println("restore <index from printfiles>");
-            System.out.println("deleteFile <index from printfiles>");
+            System.out.println("delete <index from printfiles>");
             System.out.println("setdisk <size in bytes>");
             System.out.println("info");
         }
@@ -47,7 +47,7 @@ public class ClientTester
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("deleteFile"))
+        else if (args[0].equals("delete"))
         {
             if (args.length == 2)
                 System.out.println(m_peerService.deleteFile(Integer.parseInt(args[1])) + "\n");
@@ -67,6 +67,14 @@ public class ClientTester
         {
             if (args.length == 1)
                 System.out.println(m_peerService.info() + "\n");
+            else
+                System.out.println("Invalid argument number");
+        }
+
+        else if (args[0].equals("setdisk"))
+        {
+            if (args.length == 2)
+                System.out.println(m_peerService.setMaxDiskSpace(Integer.parseInt(args[1])) + "\n");
             else
                 System.out.println("Invalid argument number");
         }

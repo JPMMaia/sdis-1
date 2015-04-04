@@ -44,7 +44,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     transient private ArrayList<Task> m_waitingMessageTasks = new ArrayList<>();
 
     // Data the peer needs to maintain to backup:
-    private long m_totalStorage = 5000000; // (bytes)
+    private long m_totalStorage = 999999999; // (bytes)
     private long m_freeStorage = m_totalStorage;
     private List<BackupFile> m_homeFiles = new ArrayList<>();
     private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // IP Addresses for each Chunk (that I did backup)
@@ -293,8 +293,12 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     @Override
     synchronized public String setMaxDiskSpace(int newStorage)
     {
+        if (newStorage < 0)
+            return "Peer::setMaxDiskSpace: Invalid max space";
+
         try
         {
+            System.out.println("Vou começar. storage inicial: " + m_totalStorage + " espaço livre: " + m_freeStorage + " NOVO STORAGE: " + newStorage);
             // If we're upgrading space, it's simple => just replace the space
             if (newStorage >= m_totalStorage)
             {
@@ -310,7 +314,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 m_freeStorage -= Math.abs(newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
                 saveState();
-                return "Peer::setMaxDiskSpace decreased space (with no need for backup) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+                return "Peer::setMaxDiskSpace decreased space (with no need for removing chunks) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
             else // if we're downgrading and we need to delete chunks!
             {
@@ -810,6 +814,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         m_freeStorage -= value;
 
+        if (m_freeStorage < 0)
+            m_freeStorage = 0;
+
         saveState();
     }
 
@@ -822,7 +829,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             Map.Entry<Chunk, HashSet<String>> entry = it.next();
 
             // If we have a higher replication degree that what we needed, delete it and send Remove message:
-            if(entry.getKey().getOptimalReplicationDeg().getValue() > entry.getValue().size())
+            if(entry.getValue().size() > entry.getKey().getOptimalReplicationDeg().getValue())
             {
                 // Send remove message:
                 RemovedMessage message = new RemovedMessage(new Version('1','0'), entry.getKey().getFileId(), entry.getKey().getChunkNo());
@@ -830,6 +837,12 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 header.addMessage(message);
                 sendHeaderMC(header);
 
+                System.out.println("Deleting a chunk that has " + entry.getValue().size() + " stores and only needs " + entry.getKey().getOptimalReplicationDeg().getValue());
+
+                // Delete physical file:
+                entry.getKey().deleteFile();
+
+                // Delete from hashtable:
                 it.remove();
             }
         }
@@ -850,11 +863,18 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             header.addMessage(message);
             sendHeaderMC(header);
 
+            // Remove from stored files:
             m_storedChunks.remove(toDelete);
+
+            // Remove physical file:
+            toDelete.deleteFile();
 
             // Update values:
             m_freeStorage += toDelete.getData().length;
             spaceToDelete -= toDelete.getData().length;
+
+            System.out.println("Deleted " + toDelete.getIdentifier() + " that weights " + toDelete.getData().length);
+            System.out.println("New free storage: " + m_freeStorage);
         }
 
         saveState();

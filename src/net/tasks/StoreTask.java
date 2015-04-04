@@ -81,7 +81,7 @@ public class StoreTask extends Task
                     // TODO: do stuff if no space available
                     if (remainingSpace <= 0)
                     {
-                        System.out.println("StoreTask::run Couldnt save the chunk, cleaning space!");
+                        System.out.println("StoreTask::run Cleaning space!");
                         m_peerAccess.cleanUnnacessaryChunks();
                     }
                 }

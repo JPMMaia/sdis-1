@@ -78,7 +78,9 @@ public class RestoreService extends UserService implements Serializable
 
                 // Wait for chunk message:
                 wait();
+                System.out.println("Vou sair do wait");
                 thread.interrupt();
+                System.out.println("Interrompi!");
 
                 System.out.println("RestoreService::run end!");
             }
