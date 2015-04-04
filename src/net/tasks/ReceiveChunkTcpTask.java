@@ -3,6 +3,7 @@ package net.tasks;
 import net.services.RestoreService;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -35,19 +36,18 @@ public class ReceiveChunkTcpTask implements Runnable
 
             Socket socket = m_serverSocket.accept();
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+            // Flag for sending data:
+            outputStream.writeBoolean(true);
 
             int length;
             length = inputStream.readInt();
             byte[] data = new byte[length];
 
-            int readBytes = 0;
-            int remainingBytes = length;
-            while(readBytes < remainingBytes)
-            {
-                readBytes += inputStream.read(data, readBytes, remainingBytes);
-                remainingBytes -= readBytes;
-            }
+            while(length != inputStream.available());
 
+            inputStream.read(data, 0, length);
 
             socket.close();
             m_serverSocket.close();
