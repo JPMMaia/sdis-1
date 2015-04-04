@@ -9,7 +9,7 @@ import java.io.*;
  */
 public class Chunk
 {
-    private static final String s_CHUNK_DIRECTORY = "chunks/";
+    public static final String s_CHUNK_DIRECTORY = "chunks/";
     private FileId m_fileId;
     private ChunkNo m_chunkNo;
     private ReplicationDeg m_optimalReplicationDegree;

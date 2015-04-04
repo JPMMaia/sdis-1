@@ -80,11 +80,12 @@ public class Header
     {
         String[] fields = Message.splitMessage(message);
 
-        // Ignoring unknown message:
-        if(fields.length == 0)
-            return;
+        String messageType;
+        if(fields.length != 0)
+            messageType = fields[0];
+        else
+            messageType = message;
 
-        String messageType = fields[0];
         switch (messageType)
         {
             case ChunkMessage.s_TYPE:
@@ -113,6 +114,10 @@ public class Header
 
             case TcpAvailableMessage.s_TYPE:
                 addMessage(TcpAvailableMessage.createMessage(fields));
+                break;
+
+            case ValidMessage.s_TYPE:
+                addMessage(ValidMessage.createMessage(fields));
                 break;
 
             default:

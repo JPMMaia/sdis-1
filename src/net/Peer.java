@@ -14,6 +14,7 @@ import net.tasks.SendChunkTcpTask;
 import net.tasks.StoreTask;
 import net.tasks.Task;
 
+import java.io.File;
 import java.io.IOException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.registry.LocateRegistry;
@@ -51,6 +52,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // IP Addresses for each Chunk (that I did backup)
     private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>(); // IP Addresses for each external Chunk I stored
     private ConcurrentHashMap<Chunk, HashSet<String>> m_tempStoredChunks = new ConcurrentHashMap<>(); // IP Addresses for each temporarily stored chunks
+    private HashMap<String, DeleteMessage> m_deleteMessages = new HashMap<>();
 
     // To restore:
     private ConcurrentHashMap<FileId, Chunk> m_receivedRecoverChunks = new ConcurrentHashMap<>();
@@ -122,12 +124,14 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Bind in the registry:
             Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
             registry.rebind(Peer.class.getName(), peerService);
+
         } catch (Exception e)
         {
             System.err.println("Peer::main: RMI is already running on another Peer!");
         }
 
         System.out.println("Peer::main: Ready!");
+        peer.validateFiles();
     }
 
     @Override
@@ -355,13 +359,30 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
                 case DeleteMessage.s_TYPE:
                 {
-                    deleteStoredChunks(receivedMsg.getFileId());
+                    DeleteMessage message = (DeleteMessage) receivedMsg;
+                    m_deleteMessages.put(message.getFileId().getValue(), message);
+                    deleteStoredChunks(message.getFileId());
                 }
                 break;
 
                 case RemovedMessage.s_TYPE:
                 {
                     //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
+                }
+                break;
+
+                case ValidMessage.s_TYPE:
+                {
+                    ValidMessage message = (ValidMessage) receivedMsg;
+                    String fileId = message.getFileId().getValue();
+
+                    DeleteMessage deleteMessage = m_deleteMessages.get(fileId);
+                    if(deleteMessage == null)
+                        break;
+
+                    Header header = new Header();
+                    header.addMessage(deleteMessage);
+                    sendHeaderMC(header);
                 }
                 break;
 
@@ -404,6 +425,28 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 entry.getKey().deleteFile(); // delete physical file
                 it.remove(); // delete from hashtable
+            }
+        }
+
+        // Remove all files in disk that have the following fileId:
+        File folder = new File(Chunk.s_CHUNK_DIRECTORY);
+        File[] listOfFiles = folder.listFiles();
+        for(File file : listOfFiles)
+        {
+            if(file.isFile())
+            {
+                String name = file.getName();
+                String[] split = name.split("\\.");
+                if(split.length != 0)
+                {
+                    if(split[0].equals(fileId.getValue()))
+                        file.delete();
+                }
+                else
+                {
+                    if(name.equals(fileId.getValue()))
+                        file.delete();
+                }
             }
         }
     }
@@ -609,5 +652,47 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         System.out.println("Peer::getStoredChunk - No chunk was found!");
         return null;
+    }
+
+    private HashSet<String> getFilesInDisk()
+    {
+        File folder = new File(Chunk.s_CHUNK_DIRECTORY);
+        File[] listOfFiles = folder.listFiles();
+
+        HashSet<String> fileIds = new HashSet<>();
+        for(File file : listOfFiles)
+        {
+            if(file.isFile())
+            {
+                String name = file.getName();
+                String[] split = name.split("\\.");
+                if(split.length != 0)
+                {
+                    fileIds.add(split[0]);
+                }
+                else
+                {
+                    fileIds.add(name);
+                }
+            }
+        }
+
+        return fileIds;
+    }
+
+    public void validateFiles() throws IOException
+    {
+        HashSet<String> fileIds = getFilesInDisk();
+
+        for(String fileId : fileIds)
+        {
+            ValidMessage message = new ValidMessage(new Version('1', '0'), new FileId(fileId));
+
+            Header header = new Header();
+            header.addMessage(message);
+
+            System.out.println("Peer::validateFiles Send VALID");
+            sendHeaderMC(header);
+        }
     }
 }
