@@ -40,8 +40,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     transient private MulticastChannelReceive m_mdrChannel;
     transient private MulticastChannelSend m_sendSocket;
 
-    private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
-    private ArrayList<Task> m_waitingMessageTasks = new ArrayList<>();
+    transient private ConcurrentHashMap<FileId, UserService> m_activeServices = new ConcurrentHashMap<>();
+    transient private ArrayList<Task> m_waitingMessageTasks = new ArrayList<>();
 
     // Data the peer needs to maintain to backup:
     private long m_totalStorage = 5000000; // (bytes)
@@ -133,9 +133,19 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         int mdrPort = Integer.parseInt(args[5]);
 
         // Create serialization folder if it doesn't exists:
-        File folder = new File(s_SERIALIZATION_FOLDER);
-        if(!folder.exists())
-            folder.mkdir();
+        File folderSer = new File(s_SERIALIZATION_FOLDER);
+        if(!folderSer.exists())
+            folderSer.mkdir();
+
+        // Create chunks folder if it doesn't exists:
+        File folderChunks = new File(Chunk.s_CHUNK_DIRECTORY);
+        if(!folderChunks.exists())
+            folderChunks.mkdir();
+
+        // Create restore folder if it doesn't exists:
+        File folderRestore = new File(BackupFile.s_RESTORE_DIRECTORY);
+        if(!folderRestore.exists())
+            folderRestore.mkdir();
 
         Peer peer;
 
@@ -173,7 +183,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         }
 
         System.out.println("Peer::main: Ready!");
-        peer.validateFiles();
+        peer.validateChunkFiles();
     }
 
     @Override
@@ -290,18 +300,29 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 m_freeStorage += (newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
-                return "Peer::setMaxDiskSpace => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+                saveState();
+                return "Peer::setMaxDiskSpace Upgraded space! Hurray! => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
 
-            // todo acabar!
-            if (newStorage >= m_freeStorage)
+            // If we're downgrading storage space: the case if there's still any free space or 0
+            if (Math.abs(newStorage - m_totalStorage) <= m_freeStorage)
             {
+                m_freeStorage -= Math.abs(newStorage - m_totalStorage);
+                m_totalStorage = newStorage;
+                saveState();
+                return "Peer::setMaxDiskSpace decreased space (with no need for backup) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+            }
+            else // if we're downgrading and we need to delete chunks!
+            {
+                m_freeStorage -= Math.abs(newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
 
-            }
+                System.out.println("Fiquei com free storage negativo: " + m_freeStorage);
 
-            saveState();
-            return "Peer::setMaxDiskSpace Your set disc space request was registered! Please come again :)";
+                freeSpaceByDeletingChunks(Math.abs(m_freeStorage));
+                saveState();
+                return "Peer::setMaxDiskSpace decreased space (with no need for backup) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+            }
         } catch (Exception e)
         {
             return "Peer::setMaxDiskSpace A problem happened: " + e.getMessage();
@@ -679,7 +700,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    public void removeStoredChunkIP(Chunk identifier, String address)
+    synchronized public void removeStoredChunkIP(Chunk identifier, String address)
     {
         if (m_storedChunks.containsKey(identifier))
         {
@@ -858,7 +879,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         return returnValue;
     }
 
-    private HashSet<String> getFilesInDisk()
+    synchronized private HashSet<String> getChunkFilesInDisk()
     {
         File folder = new File(Chunk.s_CHUNK_DIRECTORY);
         File[] listOfFiles = folder.listFiles();
@@ -884,9 +905,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         return fileIds;
     }
 
-    public void validateFiles() throws IOException
+    synchronized public void validateChunkFiles() throws IOException
     {
-        HashSet<String> fileIds = getFilesInDisk();
+        HashSet<String> fileIds = getChunkFilesInDisk();
 
         for(String fileId : fileIds)
         {
@@ -895,7 +916,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             Header header = new Header();
             header.addMessage(message);
 
-            System.out.println("Peer::validateFiles Send VALID");
+            System.out.println("Peer::validateChunkFiles Send VALID");
             sendHeaderMC(header);
         }
     }

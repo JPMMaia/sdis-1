@@ -54,6 +54,8 @@ public class ReclaimTask extends Task
             System.out.println("Resolvi iniciar o backup após o reclaim! Boraaa!");
             new Thread(new PutChunkTask(m_storedChunk, m_peerAccess)).start();
         }
+        else
+            System.out.println("N vou fazer o backup depois do reclaim :(");
 
         m_peerAccess.removeTask(this);
     }

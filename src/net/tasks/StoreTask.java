@@ -60,7 +60,6 @@ public class StoreTask extends Task
                         // If the number of stored messages is already equal or greater than the desired replication degree, we can remove it
                         if (m_peerAccess.getStoredMessagesReceivedTemporarily(storedChunk) >= storedChunk.getOptimalReplicationDeg().getValue())
                         {
-                            //System.out.println("Recebi stores: " + m_peerAccess.getStoredMessagesReceivedTemporarily(storedChunk));
                             m_peerAccess.deleteTemporarilyStoredChunk(storedChunk);
                             return;
                         }

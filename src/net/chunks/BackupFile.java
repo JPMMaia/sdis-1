@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class BackupFile implements Serializable
 {
     private static final int s_MAX_CHUNK_SIZE = 64000;
-    private static final String s_RESTORE_DIRECTORY = "restore/";
+    public static final String s_RESTORE_DIRECTORY = "restore/";
     private long m_fileSize;
     private int m_numberOfChunks;
     private String m_filePath;
