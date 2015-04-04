@@ -48,7 +48,7 @@ public class ProcessGetChunkTask extends Task
         { wait(RandomNumber.getInt(0,400)); }
         catch (InterruptedException e)
         { e.printStackTrace();
-            System.err.println("Error waiting in RestoreService"); System.exit(-2); }
+            System.err.println("Error waiting in GetChunkTask"); System.exit(-2); }
 
         // Send the chunk he wants:
         if (m_sendChunk)

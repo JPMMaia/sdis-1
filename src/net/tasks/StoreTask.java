@@ -44,6 +44,7 @@ public class StoreTask extends Task
                     long remainingSpace = m_peerAccess.getFreeSpace() - m_body.length;
                     if (remainingSpace >= 0)
                     {
+                        // Store temporarily the chunk:
                         m_peerAccess.addTemporarilyStoredChunk(storedChunk);
 
                         // Wait a random time between 0 and 400 ms:
@@ -70,6 +71,9 @@ public class StoreTask extends Task
                         header.addMessage(message);
                         m_peerAccess.sendHeaderMC(header);
 
+                        // Decrease the space available:
+                        m_peerAccess.decreaseFreeSpace((long) m_body.length);
+
                         // Store the chunk physically in a file and add it to the list:
                         m_peerAccess.moveTempChunkToStoredAndInc(storedChunk);
                         storedChunk.storeFile();
@@ -78,8 +82,8 @@ public class StoreTask extends Task
                     // TODO: do stuff if no space available
                     if (remainingSpace <= 0)
                     {
-                        // Apagar todos os chunks c/ replicação maior que necessário
-
+                        System.out.println("StoreTask::run Couldnt save the chunk, cleaning space!");
+                        m_peerAccess.cleanUnnacessaryChunks();
                     }
                 }
 

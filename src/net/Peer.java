@@ -9,10 +9,7 @@ import net.multicast.MulticastChannelSend;
 import net.services.BackupService;
 import net.services.RestoreService;
 import net.services.UserService;
-import net.tasks.ProcessGetChunkTask;
-import net.tasks.SendChunkTcpTask;
-import net.tasks.StoreTask;
-import net.tasks.Task;
+import net.tasks.*;
 
 import java.io.IOException;
 import java.rmi.AlreadyBoundException;
@@ -51,9 +48,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     private ConcurrentHashMap<Chunk, HashSet<String>> m_homeChunks = new ConcurrentHashMap<>(); // IP Addresses for each Chunk (that I did backup)
     private ConcurrentHashMap<Chunk, HashSet<String>> m_storedChunks = new ConcurrentHashMap<>(); // IP Addresses for each external Chunk I stored
     private ConcurrentHashMap<Chunk, HashSet<String>> m_tempStoredChunks = new ConcurrentHashMap<>(); // IP Addresses for each temporarily stored chunks
-
-    // To restore:
-    private ConcurrentHashMap<FileId, Chunk> m_receivedRecoverChunks = new ConcurrentHashMap<>();
 
     public Peer(String mcAddress, int mcPort, String mdbAddress, int mdbPort, String mdrAddress, int mdrPort) throws IOException
     {
@@ -232,18 +226,29 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public String setMaxDiskSpace(int bytes)
+    synchronized public String setMaxDiskSpace(int newStorage)
     {
         try
         {
-            // é preciso ordenar os cenas e ver quais os chunks a retirar (critério, rep. degree maior que o necessário, mas pode ocorrer remover um q tenha replication degree <= desejado)
-            // para os chunks a tirar, é preciso enviar "remove" e tirar dos m_storedChunks
+            // If we're upgrading space, it's simple => just replace the space
+            if (newStorage >= m_totalStorage)
+            {
+                m_freeStorage += (newStorage - m_totalStorage);
+                m_totalStorage = newStorage;
+                return "Peer::setMaxDiskSpace => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+            }
 
+            // todo acabar!
+            if (newStorage >= m_freeStorage)
+            {
+                m_totalStorage = newStorage;
 
-            return "Peer::setMaskDiskSpace Your set disc space request was registered! Please come again :)";
+            }
+
+            return "Peer::setMaxDiskSpace Your set disc space request was registered! Please come again :)";
         } catch (Exception e)
         {
-            return "Peer::setMaskDiskSpace A problem happened: " + e.getMessage();
+            return "Peer::setMaxDiskSpace A problem happened: " + e.getMessage();
         }
     }
 
@@ -361,7 +366,24 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
                 case RemovedMessage.s_TYPE:
                 {
-                    //new RemoveTask((RemovedMessage) receivedMsg, peerAddress, this);
+                    Chunk chunkKey = new Chunk(receivedMsg.getFileId(), ((RemovedMessage) receivedMsg).getChunkNo());
+
+                    // Remove IP of the peer that removed the chunk:
+                    if (isStoredChunk(chunkKey))
+                    {
+                        removeStoredChunkIP(chunkKey, peerAddress);
+
+                        // I need to do this to get the chunk that has the optimal replication information
+                        Chunk storedChunk = getStoredChunk(receivedMsg.getFileId(), ((RemovedMessage) receivedMsg).getChunkNo());
+
+                        // If the optimal replication is lower than what I wanted, let's start a ReclaimTask that may start a PutChunkTask
+                        if (m_storedChunks.get(chunkKey).size() < storedChunk.getOptimalReplicationDeg().getValue())
+                        {
+                            Task task = new ReclaimTask(storedChunk, this);
+                            m_waitingMessageTasks.add(task);
+                            new Thread(task).start();
+                        }
+                    }
                 }
                 break;
 
@@ -380,8 +402,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         for(FileId key: m_activeServices.keySet())
         {
-            if (m_activeServices.get(key).wantsMessage(message, body))
-                return;
+            m_activeServices.get(key).wantsMessage(message, body);
         }
     }
 
@@ -389,8 +410,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         for(Task task: m_waitingMessageTasks)
         {
-            if (task.wantsMessage(message, body))
-                return;
+            task.wantsMessage(message, body);
         }
     }
 
@@ -524,6 +544,13 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
+    public void removeStoredChunkIP(Chunk identifier, String address)
+    {
+        if (m_storedChunks.containsKey(identifier))
+            m_storedChunks.get(identifier).remove(address);
+    }
+
+    @Override
     synchronized public void deleteHomeFile(FileId fileId)
     {
         // Remove all home files that have the following fileId:
@@ -541,12 +568,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             if(entry.getKey().getFileId().equals(fileId))
                 it.remove();
         }
-    }
-
-    @Override
-    synchronized public long getFreeSpace()
-    {
-        return m_freeStorage;
     }
 
     @Override
@@ -609,5 +630,85 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         System.out.println("Peer::getStoredChunk - No chunk was found!");
         return null;
+    }
+
+    @Override
+    synchronized public long getFreeSpace()
+    {
+        return m_freeStorage;
+    }
+
+    @Override
+    synchronized public void decreaseFreeSpace(long value)
+    {
+        if (value < 0 || value > m_freeStorage)
+        {
+            System.out.println("Cannot decrease negative values in free space!");
+            return;
+        }
+
+        m_freeStorage -= value;
+    }
+
+    @Override
+    synchronized public void cleanUnnacessaryChunks()
+    {
+        // Remove all home chunks that have the following fileId:
+        for (Iterator<Map.Entry<Chunk, HashSet<String>>> it = m_storedChunks.entrySet().iterator(); it.hasNext(); )
+        {
+            Map.Entry<Chunk, HashSet<String>> entry = it.next();
+
+            // If we have a higher replication degree that what we needed, delete it and send Remove message:
+            if(entry.getKey().getOptimalReplicationDeg().getValue() > entry.getValue().size())
+            {
+                // Send remove message:
+                RemovedMessage message = new RemovedMessage(new Version('1','0'), entry.getKey().getFileId(), entry.getKey().getChunkNo());
+                Header header = new Header();
+                header.addMessage(message);
+                sendHeaderMC(header);
+
+                it.remove();
+            }
+        }
+    }
+
+    @Override
+    synchronized public void freeSpaceByDeletingChunks(long spaceToDelete)
+    {
+        while(spaceToDelete > 0)
+        {
+            Chunk toDelete = getMostReplicatedRatioChunk();
+
+            // Send remove message:
+            RemovedMessage message = new RemovedMessage(new Version('1','0'), toDelete.getFileId(), toDelete.getChunkNo());
+            Header header = new Header();
+            header.addMessage(message);
+            sendHeaderMC(header);
+
+            m_storedChunks.remove(toDelete);
+
+            // Update values:
+            m_freeStorage += toDelete.getData().length;
+            spaceToDelete -= toDelete.getData().length;
+        }
+    }
+
+    synchronized public Chunk getMostReplicatedRatioChunk()
+    {
+        float tempRatio = -1;
+        Chunk returnValue = null;
+
+        for(Chunk key: m_storedChunks.keySet())
+        {
+            float chunkRatio = ((float) m_storedChunks.get(key).size()) / key.getOptimalReplicationDeg().getValue();
+
+            if (chunkRatio > tempRatio)
+            {
+                tempRatio = chunkRatio;
+                returnValue = key;
+            }
+        }
+
+        return returnValue;
     }
 }

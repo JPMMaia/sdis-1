@@ -30,6 +30,8 @@ public interface IPeerDataChange
     void addStoredChunkIP(Chunk chunk, String address);
     void addTemporarilyStoredChunkIP(Chunk chunk, String address);
 
+    void removeStoredChunkIP(Chunk identifier, String address);
+
     void deleteHomeFile(FileId fileId);
 
     boolean isHomeChunk(Chunk identifier);
@@ -41,6 +43,8 @@ public interface IPeerDataChange
     int getStoredMessagesReceivedHomeOrStored(Chunk chunk);
     int getStoredMessagesReceivedTemporarily(Chunk identifier);
 
-
     long getFreeSpace();
+    void decreaseFreeSpace(long value);
+    void cleanUnnacessaryChunks();
+    void freeSpaceByDeletingChunks(long spaceToDelete);
 }
