@@ -3,6 +3,7 @@ package net.tasks;
 import net.IPeerDataChange;
 import net.chunks.Chunk;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,16 +33,23 @@ public class SendChunkTcpTask extends Task
     @Override
     public void run()
     {
+        Socket socket = null;
+
         try
         {
             System.out.println("SendChunkTcpTask::run begin!");
 
-            Socket socket = new Socket(m_address, m_port);
+            socket = new Socket(m_address, m_port);
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-            byte[] data = m_chunk.getData();
-            outputStream.writeInt(data.length);
-            outputStream.write(data);
+            boolean flag = inputStream.readBoolean();
+            if(flag)
+            {
+                byte[] data = m_chunk.getData();
+                outputStream.writeInt(data.length);
+                outputStream.write(data);
+            }
 
             socket.close();
 
@@ -50,6 +58,15 @@ public class SendChunkTcpTask extends Task
         catch (IOException e)
         {
             System.err.println("SendChunkTcpTask::run Socket is busy!");
+            if(socket != null)
+                try
+                {
+                    socket.close();
+                }
+                catch (IOException e1)
+                {
+                    e1.printStackTrace();
+                }
         }
     }
 }
