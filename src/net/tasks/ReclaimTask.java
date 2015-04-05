@@ -3,9 +3,6 @@ package net.tasks;
 import net.IPeerDataChange;
 import net.Utils.RandomNumber;
 import net.chunks.Chunk;
-import net.chunks.Version;
-import net.messages.ChunkMessage;
-import net.messages.Header;
 import net.messages.Message;
 import net.messages.PutChunkMessage;
 
@@ -31,7 +28,7 @@ public class ReclaimTask extends Task
             // Check if we received a PutChunkMessage on the chunk we want to send: if so, we don't need to send it:
             if (message.getType().equals(PutChunkMessage.s_TYPE)
                     && message.getFileId().equals(m_storedChunk.getFileId())
-                    && ((ChunkMessage) message).getChunkNo().equals(m_storedChunk.getChunkNo()))
+                    && ((PutChunkMessage) message).getChunkNo().equals(m_storedChunk.getChunkNo()))
             {
                 m_initiateBackup = false;
                 notify();
@@ -60,10 +57,10 @@ public class ReclaimTask extends Task
             // Send the chunk he wants:
             if (m_initiateBackup)
             {
-                System.out.println("Resolvi iniciar o backup após o reclaim! Boraaa!");
+                System.out.println("Let's start reclaim!");
                 new Thread(new PutChunkTask(m_storedChunk, m_peerAccess)).start();
             } else
-                System.out.println("N vou fazer o backup depois do reclaim :(");
+                System.out.println("We are not going to start reclaim!");
 
         }
 

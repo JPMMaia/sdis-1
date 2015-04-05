@@ -3,6 +3,9 @@ package net.services;
 import net.IPeerDataChange;
 import net.chunks.BackupFile;
 import net.chunks.Chunk;
+import net.chunks.Version;
+import net.messages.DeleteMessage;
+import net.messages.Header;
 import net.tasks.PutChunkTask;
 
 import java.io.Serializable;
@@ -26,7 +29,7 @@ public class BackupService extends UserService implements Serializable
         {
             Chunk chunk = chunks[chunkNo];
 
-            // Add chunk to MY chunk list: TODO: apagar o data destes chunks?
+            // Add chunk to MY chunk list:
             m_peerAccess.addHomeChunk(chunk);
 
             PutChunkTask putChunk = new PutChunkTask(chunk, m_peerAccess);
@@ -49,7 +52,11 @@ public class BackupService extends UserService implements Serializable
                 System.err.println("BackupService::run A chunk was not successfully sent after 5 times, aborting backup!");
                 m_peerAccess.deleteHomeFile(chunk.getFileId());
 
-                // TODO: mandar um delete para apagar o que ficou nos outros?!
+                // Send deleteFile:
+                DeleteMessage message = new DeleteMessage(new Version('1', '0'), chunk.getFileId());
+                Header header = new Header();
+                header.addMessage(message);
+                m_peerAccess.sendHeaderMC(header);
 
                 // End service:
                 m_peerAccess.removeUserService(this);

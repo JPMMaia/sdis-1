@@ -328,11 +328,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 m_freeStorage -= Math.abs(newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
 
-                System.out.println("Fiquei com free storage negativo: " + m_freeStorage);
-
                 freeSpaceByDeletingChunks(Math.abs(m_freeStorage));
                 //saveState();
-                return "Peer::setMaxDiskSpace decreased space (with no need for backup) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
+                return "Peer::setMaxDiskSpace decreased space (need to delete files) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
         } catch (Exception e)
         {
@@ -348,8 +346,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         String s3 = "There are " + m_homeFiles.size() + " home files.\n";
         String s4 = "Home chunks: " + m_homeChunks + "\n";
         String s5 = "Stored (backup) chunks: " + m_storedChunks + "\n";
+        String s6 = "Free space: " + m_freeStorage + " | Total space: " + m_totalStorage;
 
-        return s1 + s2 + s3 + s4 + s5;
+        return s1 + s2 + s3 + s4 + s5 + s6;
     }
 
     @Override
@@ -535,6 +534,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             if(entry.getKey().getFileId().equals(fileId))
             {
                 entry.getKey().deleteFile(); // delete physical file
+                m_freeStorage += entry.getKey().getData().length; // update free space
                 it.remove(); // delete from hashtable
             }
         }
