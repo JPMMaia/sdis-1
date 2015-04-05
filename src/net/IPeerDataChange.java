@@ -30,6 +30,7 @@ public interface IPeerDataChange
     void addStoredChunkIP(Chunk chunk, String address);
     void addTemporarilyStoredChunkIP(Chunk chunk, String address);
 
+    void removeHomeChunkIP(Chunk identifier, String address);
     void removeStoredChunkIP(Chunk identifier, String address);
 
     void deleteHomeFile(FileId fileId);

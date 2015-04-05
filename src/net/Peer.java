@@ -26,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataChange, Serializable
 {
     // RMI Service Attributes:
-    public static final String s_SERVICE_NAME = Peer.class.getName();
+    public static String s_SERVICE_NAME;
     public static final String s_SERVICE_HOST = "localhost";
-    public static final int s_SERVICE_PORT = 1099;
+    public static int s_SERVICE_PORT;
 
     private static String s_MY_ADDRESS;
     //private static String s_SERIALIZATION_FOLDER = "serialization/";
@@ -112,19 +112,21 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
     public static void main(String[] args) throws IOException, AlreadyBoundException, ClassNotFoundException
     {
-        // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889
-        if (args.length != 6)
+        // 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889 Peer 1099
+        if (args.length != 8)
         {
-            System.err.println("Peer::main: Number of arguments must be 6!");
-            System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889");
+            System.err.println("Peer::main: Number of arguments must be 8!");
+            System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889 Peer 1099");
 
-            args = new String[6];
+            args = new String[8];
             args[0] = "239.1.0.1";
             args[1] = "8887";
             args[2] = "239.1.0.2";
             args[3] = "8888";
             args[4] = "239.1.0.3";
             args[5] = "8889";
+            args[6] = "Peer";
+            args[7] = "1099";
         }
 
         String mcAddress = args[0];
@@ -133,6 +135,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         int mdbPort = Integer.parseInt(args[3]);
         String mdrAddress = args[4];
         int mdrPort = Integer.parseInt(args[5]);
+
+        s_SERVICE_NAME = args[6];
+        s_SERVICE_PORT = Integer.parseInt(args[7]);
+
 
         /* Create serialization folder if it doesn't exists:
         File folderSer = new File(s_SERIALIZATION_FOLDER);
@@ -181,7 +187,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
             // Bind in the registry:
             Registry registry = LocateRegistry.createRegistry(Peer.s_SERVICE_PORT);
-            registry.rebind(Peer.class.getName(), peerService);
+            registry.rebind(Peer.s_SERVICE_NAME, peerService);
 
         } catch (Exception e)
         {
@@ -477,6 +483,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                             new Thread(task).start();
                         }
                     }
+                    else if (isHomeChunk(chunkKey))
+                        removeHomeChunkIP(chunkKey, peerAddress);
                 }
                 break;
 
@@ -707,6 +715,16 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         else
         {
             m_tempStoredChunks.get(chunk).add(address);
+            //saveState();
+        }
+    }
+
+    @Override
+    public void removeHomeChunkIP(Chunk identifier, String address)
+    {
+        if (m_homeChunks.containsKey(identifier))
+        {
+            m_homeChunks.get(identifier).remove(address);
             //saveState();
         }
     }

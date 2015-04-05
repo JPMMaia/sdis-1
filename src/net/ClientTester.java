@@ -11,70 +11,76 @@ import java.rmi.registry.Registry;
 public class ClientTester
 {
     IPeerService m_peerService;
+    String m_rmiName;
+    int m_rmiPort;
 
     public ClientTester() throws RemoteException, NotBoundException
     {
-        Registry registry = LocateRegistry.getRegistry(Peer.s_SERVICE_HOST, Peer.s_SERVICE_PORT);
-        m_peerService = (IPeerService) registry.lookup(Peer.s_SERVICE_NAME);
     }
 
-    public void parse(String args[]) throws RemoteException
+    public void parse(String args[]) throws RemoteException, NotBoundException
     {
-        if (args.length == 0)
+        if (args.length < 3)
         {
             System.out.println("Usage:");
-            System.out.println("backup <filepath> <replication_degree>");
-            System.out.println("printfiles");
-            System.out.println("restore <index from printfiles>");
-            System.out.println("delete <index from printfiles>");
-            System.out.println("setdisk <size in bytes>");
-            System.out.println("info");
+            System.out.println("<rmi object name> <rmi port> backup <filepath> <replication_degree>");
+            System.out.println("<rmi object name> <rmi port> printfiles");
+            System.out.println("<rmi object name> <rmi port> restore <index from printfiles>");
+            System.out.println("<rmi object name> <rmi port> delete <index from printfiles>");
+            System.out.println("<rmi object name> <rmi port> setdisk <size in bytes>");
+            System.out.println("<rmi object name> <rmi port> info");
         }
 
-        else if (args[0].equals("backup"))
+        m_rmiName = args[0];
+        m_rmiPort = Integer.parseInt(args[1]);
+
+        Registry registry = LocateRegistry.getRegistry(Peer.s_SERVICE_HOST, m_rmiPort);
+        m_peerService = (IPeerService) registry.lookup(m_rmiName);
+
+        if (args[2].equals("backup"))
         {
-            if (args.length == 3)
-                System.out.println(m_peerService.backupFile(args[1], Integer.parseInt(args[2])) + "\n");
+            if (args.length - 2 == 3)
+                System.out.println(m_peerService.backupFile(args[3], Integer.parseInt(args[4])) + "\n");
             else
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("restore"))
+        else if (args[2].equals("restore"))
         {
-            if (args.length == 2)
-                System.out.println(m_peerService.restoreFile(Integer.parseInt(args[1])) + "\n");
+            if (args.length - 2 == 2)
+                System.out.println(m_peerService.restoreFile(Integer.parseInt(args[3])) + "\n");
             else
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("delete"))
+        else if (args[2].equals("delete"))
         {
-            if (args.length == 2)
-                System.out.println(m_peerService.deleteFile(Integer.parseInt(args[1])) + "\n");
+            if (args.length - 2 == 2)
+                System.out.println(m_peerService.deleteFile(Integer.parseInt(args[3])) + "\n");
             else
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("printfiles"))
+        else if (args[2].equals("printfiles"))
         {
-            if (args.length == 1)
+            if (args.length - 2 == 1)
                 System.out.println(m_peerService.printBackupFiles() + "\n");
             else
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("info"))
+        else if (args[2].equals("info"))
         {
-            if (args.length == 1)
+            if (args.length - 2 == 1)
                 System.out.println(m_peerService.info() + "\n");
             else
                 System.out.println("Invalid argument number");
         }
 
-        else if (args[0].equals("setdisk"))
+        else if (args[2].equals("setdisk"))
         {
-            if (args.length == 2)
-                System.out.println(m_peerService.setMaxDiskSpace(Integer.parseInt(args[1])) + "\n");
+            if (args.length - 2 == 2)
+                System.out.println(m_peerService.setMaxDiskSpace(Integer.parseInt(args[3])) + "\n");
             else
                 System.out.println("Invalid argument number");
         }
