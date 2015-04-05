@@ -108,6 +108,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         Thread mdrThread = new Thread(m_mdrChannel);
         mdrThread.start();
+
+        System.out.println("Free space: " + m_freeStorage + " | Total storage: " + m_totalStorage);
     }
 
     public static void main(String[] args) throws IOException, AlreadyBoundException, ClassNotFoundException
