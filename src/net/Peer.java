@@ -382,7 +382,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                     if (receivedHeader.getBody() == null)
                         throw new InvalidParameterException("Peer::onDataReceived PutChunkMessage must have body!");
 
-                    new Thread(new StoreTask((PutChunkMessage) receivedMsg, receivedHeader.getBody(), peerAddress, this)).start();
+                    new Thread(new StoreChunkTask((PutChunkMessage) receivedMsg, receivedHeader.getBody(), peerAddress, this)).start();
 
                     // Distribute messages for Reclaim tasks:
                     distributeMessageTasks(receivedMsg, receivedHeader.getBody());
@@ -418,7 +418,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         // Processing normal header:
                         if(receivedHeader.getMessageNumber() == 1)
                         {
-                            Task task = new ProcessGetChunkTask(getChunkMessage, wantedChunk, peerAddress, this);
+                            Task task = new SendChunkTask(getChunkMessage, wantedChunk, peerAddress, this);
                             m_waitingMessageTasks.add(task);
                             new Thread(task).start();
                         }

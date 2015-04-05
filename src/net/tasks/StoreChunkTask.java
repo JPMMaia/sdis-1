@@ -13,13 +13,13 @@ import java.util.Random;
 /**
  * Created by Miguel on 31-03-2015.
  */
-public class StoreTask extends Task
+public class StoreChunkTask extends Task
 {
     private PutChunkMessage m_msg;
     private byte[] m_body;
     private String m_peerAddress;
 
-    public StoreTask(PutChunkMessage message, byte[] body, String peerAddress, IPeerDataChange peer)
+    public StoreChunkTask(PutChunkMessage message, byte[] body, String peerAddress, IPeerDataChange peer)
     {
         super(peer);
         m_msg = message;

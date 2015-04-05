@@ -10,14 +10,14 @@ import net.messages.*;
 /**
  * Created by Miguel on 01-04-2015.
  */
-public class ProcessGetChunkTask extends Task
+public class SendChunkTask extends Task
 {
     private GetChunkMessage m_msg;
     private Chunk m_chunkToSend;
     private boolean m_sendChunk = true;
     private String m_peerAddress;
 
-    public ProcessGetChunkTask(GetChunkMessage message, Chunk chuckToSend, String peerAddress, IPeerDataChange peer)
+    public SendChunkTask(GetChunkMessage message, Chunk chuckToSend, String peerAddress, IPeerDataChange peer)
     {
         super(peer);
         m_msg = message;
