@@ -255,6 +255,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             return "Peer::restoreFile Your restore request was registered! Please come again :)";
         } catch (Exception e)
         {
+            e.printStackTrace();
             return "Peer::restoreFile A problem happened: " + e.getMessage();
         }
     }
@@ -437,6 +438,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                         throw new InvalidParameterException("Peer::onDataReceived ChunkMessage must have body!");
 
                     distributeMessageServices(receivedMsg, receivedHeader.getBody());
+
                     distributeMessageTasks(receivedMsg, receivedHeader.getBody());
                 }
                 break;
@@ -571,7 +573,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void sendHeaderMDB(Header header)
+    public void sendHeaderMDB(Header header)
     {
         try
         {
@@ -584,7 +586,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void sendHeaderMDR(Header header)
+    public void sendHeaderMDR(Header header)
     {
         try
         {
@@ -597,10 +599,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     }
 
     @Override
-    synchronized public void sendHeaderMC(Header header)
+    public void sendHeaderMC(Header header)
     {
         try
         {
+            System.out.println("Entrei no sendHeaderMC");
             m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort());
         }
         catch (IOException e)

@@ -26,39 +26,49 @@ public class ProcessGetChunkTask extends Task
     }
 
     @Override
-    public synchronized boolean wantsMessage(Message message, byte[] body)
+    public boolean wantsMessage(Message message, byte[] body)
     {
-        // Chunk response to the get chunk message - check if we received a chunk message:
-        if (message.getType().equals(ChunkMessage.s_TYPE)
-            && message.getFileId().equals(m_msg.getFileId())
-            && ((ChunkMessage) message).getChunkNo().equals(m_msg.getChunkNo()))
+        synchronized (this)
         {
-            m_sendChunk = false;
-            notify();
-            return true;
+            // Chunk response to the get chunk message - check if we received a chunk message:
+            if (message.getType().equals(ChunkMessage.s_TYPE)
+                    && message.getFileId().equals(m_msg.getFileId())
+                    && ((ChunkMessage) message).getChunkNo().equals(m_msg.getChunkNo()))
+            {
+                m_sendChunk = false;
+                notify();
+                return true;
+            } else
+                return false;
         }
-        else
-            return false;
     }
 
     @Override
-    public synchronized void run()
+    public void run()
     {
-        try
-        { wait(RandomNumber.getInt(0,400)); }
-        catch (InterruptedException e)
-        { e.printStackTrace();
-            System.err.println("Error waiting in GetChunkTask"); System.exit(-2); }
-
-        // Send the chunk he wants:
-        if (m_sendChunk)
+        synchronized (this)
         {
-            ChunkMessage message = new ChunkMessage(new Version('1','0'), m_msg.getFileId(), m_msg.getChunkNo());
-            Header header = new Header();
-            header.addMessage(message);
-            header.setBody(m_chunkToSend.getData());
+            try
+            {
+                wait(RandomNumber.getInt(0, 400));
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+                System.err.println("Error waiting in GetChunkTask");
+                System.exit(-2);
+            }
 
-            m_peerAccess.sendHeaderMDR(header);
+            // Send the chunk he wants:
+            if (m_sendChunk)
+            {
+                ChunkMessage message = new ChunkMessage(new Version('1', '0'), m_msg.getFileId(), m_msg.getChunkNo());
+                Header header = new Header();
+                header.addMessage(message);
+                header.setBody(m_chunkToSend.getData());
+
+                m_peerAccess.sendHeaderMDR(header);
+            }
         }
 
         m_peerAccess.removeTask(this);

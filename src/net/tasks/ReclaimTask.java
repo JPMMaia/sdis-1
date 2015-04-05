@@ -24,38 +24,48 @@ public class ReclaimTask extends Task
     }
 
     @Override
-    public synchronized boolean wantsMessage(Message message, byte[] body)
+    public boolean wantsMessage(Message message, byte[] body)
     {
-        // Check if we received a PutChunkMessage on the chunk we want to send: if so, we don't need to send it:
-        if (message.getType().equals(PutChunkMessage.s_TYPE)
-                && message.getFileId().equals(m_storedChunk.getFileId())
-                && ((ChunkMessage) message).getChunkNo().equals(m_storedChunk.getChunkNo()))
+        synchronized (this)
         {
-            m_initiateBackup = false;
-            notify();
-            return true;
+            // Check if we received a PutChunkMessage on the chunk we want to send: if so, we don't need to send it:
+            if (message.getType().equals(PutChunkMessage.s_TYPE)
+                    && message.getFileId().equals(m_storedChunk.getFileId())
+                    && ((ChunkMessage) message).getChunkNo().equals(m_storedChunk.getChunkNo()))
+            {
+                m_initiateBackup = false;
+                notify();
+                return true;
+            } else
+                return false;
         }
-        else
-            return false;
     }
 
     @Override
-    public synchronized void run()
+    public void run()
     {
-        try
-        { wait(RandomNumber.getInt(0, 400)); }
-        catch (InterruptedException e)
-        { e.printStackTrace();
-            System.err.println("Error waiting in ReclaimTask"); System.exit(-2); }
-
-        // Send the chunk he wants:
-        if (m_initiateBackup)
+        synchronized (this)
         {
-            System.out.println("Resolvi iniciar o backup após o reclaim! Boraaa!");
-            new Thread(new PutChunkTask(m_storedChunk, m_peerAccess)).start();
+            try
+            {
+                wait(RandomNumber.getInt(0, 400));
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+                System.err.println("Error waiting in ReclaimTask");
+                System.exit(-2);
+            }
+
+            // Send the chunk he wants:
+            if (m_initiateBackup)
+            {
+                System.out.println("Resolvi iniciar o backup após o reclaim! Boraaa!");
+                new Thread(new PutChunkTask(m_storedChunk, m_peerAccess)).start();
+            } else
+                System.out.println("N vou fazer o backup depois do reclaim :(");
+
         }
-        else
-            System.out.println("N vou fazer o backup depois do reclaim :(");
 
         m_peerAccess.removeTask(this);
     }
