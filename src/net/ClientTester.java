@@ -29,6 +29,7 @@ public class ClientTester
             System.out.println("<rmi object name> <rmi port> delete <index from printfiles>");
             System.out.println("<rmi object name> <rmi port> setdisk <size in bytes>");
             System.out.println("<rmi object name> <rmi port> info");
+            return;
         }
 
         m_rmiName = args[0];
