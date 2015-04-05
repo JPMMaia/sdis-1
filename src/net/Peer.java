@@ -118,7 +118,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (args.length != 8)
         {
             System.err.println("Peer::main: Number of arguments must be 8!");
-            System.out.println("Usage: <MC channel address> <MC channel port> <MDB channel address> <MDB channel port> <MDR channel address> <MDR channel port>");
+            System.out.println("Usage: <MC channel address> <MC channel port> <MDB channel address> <MDB channel port> <MDR channel address> <MDR channel port> <RMI object name> <RMI port>");
             System.out.println("Assumed default values: 239.1.0.1 8887 239.1.0.2 8888 239.1.0.3 8889 Peer 1099");
 
             args = new String[8];
