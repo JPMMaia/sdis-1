@@ -31,8 +31,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     public static final int s_SERVICE_PORT = 1099;
 
     private static String s_MY_ADDRESS;
-    private static String s_SERIALIZATION_FOLDER = "serialization/";
-    private static String s_SERIALIZATION_FILE = "session.ser";
+    //private static String s_SERIALIZATION_FOLDER = "serialization/";
+    //private static String s_SERIALIZATION_FILE = "session.ser";
 
     // Multicast channels:
     transient private MulticastChannelReceive m_mcChannel;
@@ -75,6 +75,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         System.out.println("Peer running at address: " + s_MY_ADDRESS);
     }
 
+    /*
     public void saveState()
     {
         FileOutputStream fileOut = null;
@@ -95,6 +96,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             e.printStackTrace();
         }
     }
+    */
 
     synchronized public void run()
     {
@@ -132,10 +134,10 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         String mdrAddress = args[4];
         int mdrPort = Integer.parseInt(args[5]);
 
-        // Create serialization folder if it doesn't exists:
+        /* Create serialization folder if it doesn't exists:
         File folderSer = new File(s_SERIALIZATION_FOLDER);
         if(!folderSer.exists())
-            folderSer.mkdir();
+            folderSer.mkdir(); */
 
         // Create chunks folder if it doesn't exists:
         File folderChunks = new File(Chunk.s_CHUNK_DIRECTORY);
@@ -147,8 +149,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if(!folderRestore.exists())
             folderRestore.mkdir();
 
-        Peer peer;
 
+
+        /*
         // If serialization file exists:
         File file = new File(s_SERIALIZATION_FOLDER + s_SERIALIZATION_FILE);
         if(file.exists())
@@ -163,6 +166,9 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         {
             peer = new Peer();
         }
+        */
+
+        Peer peer = new Peer();
 
         // Initialize peer:
         peer.initialize(mcAddress, mcPort, mdbAddress, mdbPort, mdrAddress, mdrPort);
@@ -204,7 +210,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Add to the active services list:
             m_activeServices.put(file.getFileId(), backup);
 
-            saveState();
+            //saveState();
             return "Peer::backupFile Your backup request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -251,7 +257,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             // Add to the active services list:
             m_activeServices.put(file.getFileId(), restore);
 
-            saveState();
+            //saveState();
             return "Peer::restoreFile Your restore request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -283,7 +289,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             header.addMessage(message);
             sendHeaderMC(header);
 
-            saveState();
+            //saveState();
             return "Peer::deleteFile Your delete file request was registered! Please come again :)";
         } catch (Exception e)
         {
@@ -305,7 +311,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 m_freeStorage += (newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
-                saveState();
+                //saveState();
                 return "Peer::setMaxDiskSpace Upgraded space! Hurray! => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
 
@@ -314,7 +320,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 m_freeStorage -= Math.abs(newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
-                saveState();
+                //saveState();
                 return "Peer::setMaxDiskSpace decreased space (with no need for removing chunks) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
             else // if we're downgrading and we need to delete chunks!
@@ -325,7 +331,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 System.out.println("Fiquei com free storage negativo: " + m_freeStorage);
 
                 freeSpaceByDeletingChunks(Math.abs(m_freeStorage));
-                saveState();
+                //saveState();
                 return "Peer::setMaxDiskSpace decreased space (with no need for backup) => new Total storage: " + m_totalStorage + " | => new Free storage: " + m_freeStorage;
             }
         } catch (Exception e)
@@ -501,7 +507,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             return;
         }
 
-        saveState();
+        //saveState();
     }
 
     synchronized private void distributeMessageServices(Message message, byte[] body)
@@ -555,21 +561,21 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             }
         }
 
-        saveState();
+        //saveState();
     }
 
     @Override
     synchronized public void removeUserService(UserService service)
     {
         m_activeServices.remove(service.getFileId());
-        saveState();
+        //saveState();
     }
 
     @Override
     synchronized public void removeTask(Task service)
     {
         m_waitingMessageTasks.remove(service);
-        saveState();
+        //saveState();
     }
 
     @Override
@@ -603,7 +609,6 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     {
         try
         {
-            System.out.println("Entrei no sendHeaderMC");
             m_sendSocket.sendHeader(header, m_mcChannel.getAddress(), m_mcChannel.getPort());
         }
         catch (IOException e)
@@ -618,7 +623,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (!m_homeFiles.contains(file))
         {
             m_homeFiles.add(file);
-            saveState();
+            //saveState();
         }
         else
             System.out.println("DEBUG: Home file already exists!");
@@ -630,7 +635,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (!m_homeChunks.containsKey(identifier))
         {
             m_homeChunks.put(identifier, new HashSet<>());
-            saveState();
+            //saveState();
         }
 
         else
@@ -645,7 +650,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         else
         {
             m_tempStoredChunks.put(chunk, new HashSet<>());
-            saveState();
+            //saveState();
         }
     }
 
@@ -653,7 +658,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
     synchronized public void deleteTemporarilyStoredChunk(Chunk chunk)
     {
         m_tempStoredChunks.remove(chunk);
-        saveState();
+        //saveState();
     }
 
     @Override
@@ -666,7 +671,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
             addresses.add(s_MY_ADDRESS); // add my address!
             m_storedChunks.put(chunk, addresses);
-            saveState();
+            //saveState();
         }
     }
 
@@ -678,7 +683,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         else
         {
             m_homeChunks.get(identifier).add(address);
-            saveState();
+            //saveState();
         }
     }
 
@@ -690,7 +695,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         else
         {
             m_storedChunks.get(chunk).add(address);
-            saveState();
+            //saveState();
         }
     }
 
@@ -702,7 +707,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         else
         {
             m_tempStoredChunks.get(chunk).add(address);
-            saveState();
+            //saveState();
         }
     }
 
@@ -712,7 +717,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (m_storedChunks.containsKey(identifier))
         {
             m_storedChunks.get(identifier).remove(address);
-            saveState();
+            //saveState();
         }
     }
 
@@ -735,7 +740,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
                 it.remove();
         }
 
-        saveState();
+        //saveState();
     }
 
     @Override
@@ -820,7 +825,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
         if (m_freeStorage < 0)
             m_freeStorage = 0;
 
-        saveState();
+        //saveState();
     }
 
     @Override
@@ -850,7 +855,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             }
         }
 
-        saveState();
+        //saveState();
     }
 
     @Override
@@ -880,7 +885,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             System.out.println("New free storage: " + m_freeStorage);
         }
 
-        saveState();
+        //saveState();
     }
 
     synchronized public Chunk getMostReplicatedRatioChunk()
@@ -934,12 +939,11 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         for(String fileId : fileIds)
         {
-            ValidMessage message = new ValidMessage(new Version('1', '0'), new FileId(fileId));
+            ValidMessage message = new ValidMessage(new Version('1', '1'), new FileId(fileId));
 
             Header header = new Header();
             header.addMessage(message);
 
-            System.out.println("Peer::validateChunkFiles Send VALID");
             sendHeaderMC(header);
         }
     }
