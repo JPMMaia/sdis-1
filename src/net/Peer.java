@@ -939,7 +939,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         for(String fileId : fileIds)
         {
-            ValidMessage message = new ValidMessage(new Version('1', '1'), new FileId(fileId));
+            ValidMessage message = new ValidMessage(new Version('1', '0'), new FileId(fileId));
 
             Header header = new Header();
             header.addMessage(message);
