@@ -1,14 +1,12 @@
 package net.tasks;
 
 import net.IPeerDataChange;
-import net.Utils.RandomNumber;
+import net.utils.RandomNumber;
 import net.chunks.Chunk;
 import net.chunks.Version;
 import net.messages.Header;
 import net.messages.PutChunkMessage;
 import net.messages.StoredMessage;
-
-import java.util.Random;
 
 /**
  * Created by Miguel on 31-03-2015.

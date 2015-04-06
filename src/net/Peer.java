@@ -1,6 +1,6 @@
 package net;
 
-import net.Utils.IPFinder;
+import net.utils.IPFinder;
 import net.chunks.*;
 import net.messages.*;
 import net.multicast.IMulticastChannelListener;
@@ -314,7 +314,7 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
 
         try
         {
-            System.out.println("Vou começar. storage inicial: " + m_totalStorage + " espaço livre: " + m_freeStorage + " NOVO STORAGE: " + newStorage);
+            System.out.println("Initial storage: " + m_totalStorage + " free storage: " + m_freeStorage + " New Storage: " + newStorage);
             // If we're upgrading space, it's simple => just replace the space
             if (newStorage >= m_totalStorage)
             {
@@ -336,6 +336,8 @@ public class Peer implements IPeerService, IMulticastChannelListener, IPeerDataC
             {
                 m_freeStorage -= Math.abs(newStorage - m_totalStorage);
                 m_totalStorage = newStorage;
+
+                System.out.println("I need to free: " + m_freeStorage);
 
                 freeSpaceByDeletingChunks(Math.abs(m_freeStorage));
                 //saveState();

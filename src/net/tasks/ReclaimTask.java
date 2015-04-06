@@ -1,7 +1,7 @@
 package net.tasks;
 
 import net.IPeerDataChange;
-import net.Utils.RandomNumber;
+import net.utils.RandomNumber;
 import net.chunks.Chunk;
 import net.messages.Message;
 import net.messages.PutChunkMessage;
